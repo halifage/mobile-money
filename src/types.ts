@@ -11,6 +11,8 @@ export interface CollectRequest {
   description: string
   /** Passed through as is; sign it with signCallbackUrl. */
   callbackUrl: string
+  /** Where the payer returns after paying on a provider page. Required by orangeWebPay. */
+  returnUrl?: string
 }
 
 export type FailureReason = 'insufficient_funds' | 'declined' | 'expired' | 'unknown'
@@ -22,7 +24,8 @@ export type Outcome =
 
 export interface MobileMoneyProvider {
   readonly operators: readonly Operator[]
-  collect(request: CollectRequest): Promise<{ ref: string }>
+  /** redirectUrl: when set, send the payer there to complete the payment. */
+  collect(request: CollectRequest): Promise<{ ref: string; redirectUrl?: string }>
   status(ref: string): Promise<Outcome>
 }
 
