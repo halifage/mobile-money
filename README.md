@@ -89,7 +89,9 @@ Your app picks the provider per operator. To add an aggregator (Paynote, pawaPay
 
 - Orange (live, 2026-10-14): token, `mp/init` and TLS verification work as documented. `mp/pay` rejects an
   `orderId` over 20 characters with HTTP 422, so the SDK sends `id` without dashes, cut to 20. Status spellings:
-  documented `PENDING` and `SUCCESSFULL`; a completed live run goes here.
+  documented `PENDING` and `SUCCESSFULL`, plus `FAILED` seen in `data.status`. A wrong merchant PIN returns HTTP 417
+  with `inittxnstatus` `00036` and **blocks the merchant account** (unblock with `#150*1#` from the merchant SIM), so
+  check the PIN before going live. A completed (approved) payment has not been observed yet.
 
 ## Development
 
