@@ -99,10 +99,11 @@ npm run build     # dist/
 npm run smoke     # pack, install, import
 ```
 
-Live Orange test (moves real money): put `ORANGE_USERNAME`, `ORANGE_PASSWORD`, `ORANGE_AUTH_TOKEN`,
-`ORANGE_MERCHANT_MSISDN` and `ORANGE_PIN` in `.env.live` (gitignored), then:
+Live Orange test (moves real money): copy `.env.example` to `.env.live` (all `.env*` files except the example are
+gitignored), fill in the Orange credentials, then:
 
 ```bash
+cp .env.example .env.live
 npm run build && node --env-file=.env.live scripts/live-orange.mjs 6XXXXXXXX 10
 ```
 
