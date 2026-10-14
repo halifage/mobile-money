@@ -1,9 +1,12 @@
 {
   "name": "@halifage/mobile-money",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Mobile money collections for Cameroon: Orange and MTN direct, extensible to aggregators",
   "license": "MIT",
-  "repository": "github:halifage/mobile-money",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/halifage/mobile-money.git"
+  },
   "type": "module",
   "engines": {
     "node": ">=22"

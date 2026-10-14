@@ -11,6 +11,10 @@ export type ContractFixtures = {
   /** routes, besides the token, that make collect succeed */
   accepted: Record<string, Reply>
   expectedRef: string
+  /** redirectUrl collect returns, if the provider hands the payer to its own page */
+  redirectUrl?: string
+  /** how a failed send is reported; default 'uncertain' carrying expectedRef */
+  sendFailure?: 'uncertain' | 'rejected'
   status: { completed: Reply; failed: Reply; failedReason: FailureReason; pending: Reply; unknown: Reply }
 }
 
@@ -34,7 +38,9 @@ export function describeProviderContract(name: string, f: ContractFixtures) {
 
     it('collect returns the ref', async () => {
       mockFetch({ '/token': TOKEN, ...f.accepted })
-      await expect(f.make().collect(f.request)).resolves.toEqual({ ref })
+      const result = await f.make().collect(f.request)
+      expect(result.ref).toBe(ref)
+      expect(result.redirectUrl).toBe(f.redirectUrl)
     })
 
     it('4xx on send → rejected', async () => {
@@ -42,14 +48,16 @@ export function describeProviderContract(name: string, f: ContractFixtures) {
       expect((await caught(f.make().collect(f.request))).kind).toBe('rejected')
     })
 
-    it('network error on send → uncertain with ref', async () => {
+    const sendFailure = f.sendFailure === 'rejected' ? { kind: 'rejected' } : { kind: 'uncertain', ref }
+
+    it(`network error on send → ${sendFailure.kind}`, async () => {
       mockFetch({ '/token': TOKEN, ...f.accepted, [f.paths.send]: new TypeError('fetch failed') })
-      expect(await caught(f.make().collect(f.request))).toMatchObject({ kind: 'uncertain', ref })
+      expect(await caught(f.make().collect(f.request))).toMatchObject(sendFailure)
     })
 
-    it('5xx on send → uncertain with ref', async () => {
+    it(`5xx on send → ${sendFailure.kind}`, async () => {
       mockFetch({ '/token': TOKEN, ...f.accepted, [f.paths.send]: { status: 503 } })
-      expect(await caught(f.make().collect(f.request))).toMatchObject({ kind: 'uncertain', ref })
+      expect(await caught(f.make().collect(f.request))).toMatchObject(sendFailure)
     })
 
     it('token failure → rejected and nothing sent', async () => {
@@ -122,10 +130,13 @@ export function describeProviderContract(name: string, f: ContractFixtures) {
       expect(tokenCalls(calls)).toBe(1)
     })
 
-    it('encodes the ref in the status URL', async () => {
+    it('never puts a hostile ref into a request URL unencoded', async () => {
       const { calls } = mockFetch({ '/token': TOKEN, [f.paths.status]: f.status.pending })
-      await f.make().status('../x?y')
-      expect(calls.find((c) => c.url.includes(f.paths.status))?.url).toContain('..%2Fx%3Fy')
+      await f
+        .make()
+        .status('../x?y')
+        .catch(() => undefined)
+      for (const call of calls) expect(call.url).not.toMatch(/\/\.\.\/|\?y/)
     })
   })
 }

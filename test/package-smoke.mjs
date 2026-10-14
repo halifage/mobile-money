@@ -11,7 +11,7 @@ execFileSync('npm', ['install', '--no-audit', '--no-fund', join(dir, tarball)], 
 writeFileSync(
   join(dir, 'check.mjs'),
   `import * as sdk from '@halifage/mobile-money'
-const want = ['MobileMoneyError', 'mtnDirect', 'orangeDirect', 'signCallbackUrl', 'verifyCallback']
+const want = ['MobileMoneyError', 'mtnDirect', 'orangeDirect', 'orangeWebPay', 'signCallbackUrl', 'verifyCallback']
 const got = Object.keys(sdk).sort()
 if (JSON.stringify(got) !== JSON.stringify(want)) {
   console.error('unexpected exports', got)
