@@ -10,3 +10,4 @@ export {
   type Operator,
   type Outcome,
 } from './types.js'
+export { type OrangeWebPayConfig, orangeWebPay } from './webpay.js'
