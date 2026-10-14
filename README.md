@@ -207,6 +207,12 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   `WALLET_LIMIT_REACHED`). Callbacks were not exercised (none configured): polling only. A non-https `returnUrl`
   (`http://localhost`) is rejected with HTTP 400 `INVALID_PARAMETER`; 4xx errors carry `failureReason.failureCode`.
 
+- MTN MoMo sandbox (2026-11-03): token, `requesttopay` (202, empty body) and status polling work as documented,
+  currency `EUR`. Status spellings: `CREATED` (pending), `SUCCESSFUL` (with `financialTransactionId`) and `FAILED`
+  with a `reason`: `APPROVAL_REJECTED`, `INTERNAL_PROCESSING_ERROR`, `PAYER_NOT_FOUND`, `INVALID_CURRENCY`. The documented
+  test numbers are unreliable: `46733123451` rejects and `…454` stays pending, but `…450`/`…461`/`…455`/`…460` fail
+  with the reasons above; `237670000000` succeeds. `POST /v1_0/apiuser` returned 500 for every request on 2026-10-14.
+
 ## Development
 
 ```bash
@@ -248,4 +254,16 @@ pawaPay sandbox (no real money): put `PAWAPAY_TOKEN` in `.env.live` (sandbox tes
 npm run build && node --env-file=.env.live scripts/live-pawapay.mjs collect 237653456789 100   # open the URL, pay
 node --env-file=.env.live scripts/live-pawapay.mjs payout 237693456789 100
 node --env-file=.env.live scripts/live-pawapay.mjs listen 8787                                  # callback bodies
+```
+
+MTN MoMo sandbox (EUR, no real money): put the Collections primary key in `.env.live` as `MTN_SUBSCRIPTION_KEY`,
+create a sandbox API user and key once (appended to `.env.live`), then run against a sandbox test number
+(`237670000000` successful, `46733123451` rejected, `…454` pending; other `4673312345x` numbers mostly fail):
+
+```bash
+node --env-file=.env.live scripts/mtn-sandbox-user.mjs >> .env.live
+```
+
+```bash
+npm run build && node --env-file=.env.live scripts/live-mtn.mjs 237670000000 10
 ```
