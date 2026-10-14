@@ -101,7 +101,8 @@ export function orangeDirect(config: OrangeDirectConfig): MobileMoneyProvider {
             amount: String(request.amount),
             subscriberMsisdn,
             pin: config.pin,
-            orderId: request.id,
+            // Orange caps orderId at 20 chars; payToken is the ref, so a shortened id is only a label
+            orderId: request.id.replace(/-/g, '').slice(0, 20),
             description: request.description,
             payToken,
           }),

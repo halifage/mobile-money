@@ -79,10 +79,16 @@ describe('orangeDirect', () => {
       amount: '10',
       subscriberMsisdn: '690000000',
       pin: '4242',
-      orderId: request.id,
+      orderId: 'b3f1c2d45e6f4a7b8c9d',
       description: 'Order 42',
       payToken: 'MP123',
     })
+  })
+
+  it('keeps orderId within the Orange 20-character limit', async () => {
+    const { calls } = mockFetch({ '/token': TOKEN, ...accepted })
+    await orangeDirect(config).collect({ ...request, id: 'order-with-a-very-long-identifier-42' })
+    expect(bodyOf(calls[2]).orderId).toBe('orderwithaverylongid')
   })
 
   it.each(['+237690000000', '237690000000', '690 00 00 00', '690-000-000'])('normalises phone %s', async (phone) => {

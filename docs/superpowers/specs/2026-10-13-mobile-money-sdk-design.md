@@ -101,7 +101,8 @@ Config: `orangeDirect({ username, password, authToken, merchantMsisdn, pin, base
 2. `POST /omcoreapis/1.0.2/mp/init` → `data.payToken`. Any failure → `rejected` (nothing charged yet).
 3. `POST /omcoreapis/1.0.2/mp/pay` with JSON
    `{ notifUrl: callbackUrl, channelUserMsisdn: merchantMsisdn, amount: String(amount), subscriberMsisdn, pin,
-   orderId: id, description, payToken }`.
+   orderId, description, payToken }`. `orderId` is `id` without dashes, cut to 20 chars
+   (Orange limit, seen in the live test).
    - 2xx → `{ ref: payToken }`.
    - 4xx → `rejected`, code from response `message` (truncated to 64 chars).
    - 5xx, timeout, network error → `uncertain` with `ref: payToken`.

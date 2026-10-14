@@ -87,7 +87,9 @@ Your app picks the provider per operator. To add an aggregator (Paynote, pawaPay
 
 ## Observed provider behaviour
 
-- Orange: documented statuses `PENDING` and `SUCCESSFULL`. Results of the first live test go here.
+- Orange (live, 2026-10-14): token, `mp/init` and TLS verification work as documented. `mp/pay` rejects an
+  `orderId` over 20 characters with HTTP 422, so the SDK sends `id` without dashes, cut to 20. Status spellings:
+  documented `PENDING` and `SUCCESSFULL`; a completed live run goes here.
 
 ## Development
 
