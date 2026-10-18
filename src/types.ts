@@ -30,6 +30,22 @@ export interface MobileMoneyProvider {
   status(ref: string): Promise<Outcome>
 }
 
+export interface PayoutRequest {
+  /** App's payout id, used as the idempotency key. */
+  id: string
+  operator: Operator
+  /** Whole units, positive integer; the recipient gets exactly this. */
+  amount: number
+  phone: string
+  /** Shown to the recipient when the provider supports it. */
+  message?: string
+}
+
+export interface MobileMoneyPayouts {
+  payout(request: PayoutRequest): Promise<{ ref: string }>
+  payoutStatus(ref: string): Promise<Outcome>
+}
+
 /**
  * rejected: nothing was sent, no money moved.
  * uncertain: the request may have reached the provider; poll status(ref) when ref is set.

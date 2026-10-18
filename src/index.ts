@@ -7,8 +7,10 @@ export {
   type ErrorKind,
   type FailureReason,
   MobileMoneyError,
+  type MobileMoneyPayouts,
   type MobileMoneyProvider,
   type Operator,
   type Outcome,
+  type PayoutRequest,
 } from './types.js'
 export { type OrangeWebPayConfig, orangeWebPay } from './webpay.js'

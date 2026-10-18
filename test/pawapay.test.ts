@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type PawaPayConfig, pawaPay } from '../src/pawapay.js'
-import type { CollectRequest } from '../src/types.js'
+import type { CollectRequest, Operator, PayoutRequest } from '../src/types.js'
 import { caught, describeProviderContract } from './contract.js'
 import { bodyOf, headersOf, mockFetch, type Reply } from './fetch.js'
 
@@ -120,5 +120,126 @@ describe('pawaPay collections', () => {
       'https://api.sandbox.pawapay.io/v2/paymentpage',
       'https://api.pawapay.io/v2/paymentpage',
     ])
+  })
+})
+
+describe('pawaPay payouts', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  const payout: PayoutRequest = {
+    id: 'c4e2d3f5-6a7b-4c8d-9e0f-1a2b3c4d5e6f',
+    operator: 'orange',
+    amount: 20000,
+    phone: '693456789',
+    message: 'Ecolage versement',
+  }
+  const reply = (status: string, extra: Record<string, unknown> = {}): Reply => ({
+    status: 200,
+    body: { payoutId: payout.id, status, ...extra },
+  })
+  const found = (status: string, extra: Record<string, unknown> = {}): Reply => ({
+    status: 200,
+    body: { status: 'FOUND', data: { payoutId: payout.id, status, ...extra } },
+  })
+
+  it('posts the payout', async () => {
+    const { calls } = mockFetch({ '/v2/payouts': reply('ACCEPTED') })
+    await pawaPay(config).payout(payout)
+    expect(calls[0]?.url).toBe('https://pawapay.test/v2/payouts')
+    expect(headersOf(calls[0]).authorization).toBe('Bearer tok_test')
+    expect(bodyOf(calls[0])).toEqual({
+      payoutId: payout.id,
+      amount: '20000',
+      currency: 'XAF',
+      recipient: { type: 'MMO', accountDetails: { phoneNumber: '237693456789', provider: 'ORANGE_CMR' } },
+      customerMessage: 'Ecolage versement',
+    })
+    for (const message of ['abc', 'x'.repeat(23), undefined]) {
+      const { calls } = mockFetch({ '/v2/payouts': reply('ACCEPTED') })
+      await pawaPay(config).payout({ ...payout, message })
+      expect(bodyOf(calls[0])).not.toHaveProperty('customerMessage')
+    }
+  })
+
+  it('ACCEPTED and DUPLICATE_IGNORED resolve with the ref', async () => {
+    mockFetch({ '/v2/payouts': [reply('ACCEPTED'), reply('DUPLICATE_IGNORED')] })
+    const provider = pawaPay(config)
+    await expect(provider.payout(payout)).resolves.toEqual({ ref: payout.id })
+    await expect(provider.payout(payout)).resolves.toEqual({ ref: payout.id })
+  })
+
+  it('REJECTED → rejected with the failure code', async () => {
+    mockFetch({ '/v2/payouts': reply('REJECTED', { failureReason: { failureCode: 'INVALID_PHONE_NUMBER' } }) })
+    expect(await caught(pawaPay(config).payout(payout))).toMatchObject({
+      kind: 'rejected',
+      code: 'INVALID_PHONE_NUMBER',
+    })
+  })
+
+  it('REJECTED UNKNOWN_ERROR, network error, 5xx → uncertain with ref', async () => {
+    const replies: Reply[] = [
+      reply('REJECTED', { failureReason: { failureCode: 'UNKNOWN_ERROR' } }),
+      new TypeError('fetch failed'),
+      { status: 503 },
+    ]
+    for (const r of replies) {
+      mockFetch({ '/v2/payouts': r })
+      expect(await caught(pawaPay(config).payout(payout))).toMatchObject({ kind: 'uncertain', ref: payout.id })
+    }
+  })
+
+  it('invalid payout input → rejected before any fetch', async () => {
+    const { calls } = mockFetch({})
+    const bad: Partial<PayoutRequest>[] = [
+      { id: 'p-1' },
+      { amount: 0 },
+      { amount: 1.5 },
+      { phone: '+233201234567' },
+      { operator: 'airtel' as Operator },
+    ]
+    for (const b of bad) {
+      expect(await caught(pawaPay(config).payout({ ...payout, ...b }))).toMatchObject({
+        kind: 'rejected',
+        code: 'invalid_input',
+      })
+    }
+    expect(calls).toHaveLength(0)
+  })
+
+  it('maps payout statuses', async () => {
+    mockFetch({
+      '/v2/payouts/': [
+        found('COMPLETED', { amount: '20000.00', currency: 'XAF' }),
+        found('FAILED', { failureReason: { failureCode: 'RECIPIENT_NOT_FOUND' } }),
+        found('ENQUEUED'),
+        { status: 200, body: { status: 'NOT_FOUND' } },
+      ],
+    })
+    const provider = pawaPay(config)
+    await expect(provider.payoutStatus(payout.id)).resolves.toEqual({
+      status: 'completed',
+      amount: 20000,
+      currency: 'XAF',
+    })
+    await expect(provider.payoutStatus(payout.id)).resolves.toEqual({
+      status: 'failed',
+      reason: 'unknown',
+      code: 'RECIPIENT_NOT_FOUND',
+    })
+    await expect(provider.payoutStatus(payout.id)).resolves.toEqual({ status: 'pending' })
+    await expect(provider.payoutStatus(payout.id)).resolves.toEqual({
+      status: 'failed',
+      reason: 'unknown',
+      code: 'NOT_FOUND',
+    })
+  })
+
+  it('payout status 5xx or bad body → unavailable; hostile ref encoded', async () => {
+    for (const r of [{ status: 500 }, { status: 200, body: {} }] as Reply[]) {
+      mockFetch({ '/v2/payouts/': r })
+      expect((await caught(pawaPay(config).payoutStatus(payout.id))).kind).toBe('unavailable')
+    }
+    const { calls } = mockFetch({ '/v2/payouts/': found('ENQUEUED') })
+    await pawaPay(config).payoutStatus('../x?y')
+    expect(calls[0]?.url).toBe('https://pawapay.test/v2/payouts/..%2Fx%3Fy')
   })
 })
