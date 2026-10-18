@@ -17,6 +17,16 @@ const request: CollectRequest = {
 const PAGE = 'https://sandbox.paywith.pawapay.io/?token=abc'
 // shapes as observed in the pawaPay sandbox, 2026-10-18
 const ACCEPTED: Reply = { status: 201, body: { redirectUrl: PAGE } }
+// 400 observed in the sandbox for returnUrl http://localhost
+const INVALID_RETURN_URL: Reply = {
+  status: 400,
+  body: {
+    failureReason: {
+      failureCode: 'INVALID_PARAMETER',
+      failureMessage: "Value for parameter 'returnUrl' is invalid...",
+    },
+  },
+}
 const dep = (status: string, extra: Record<string, unknown> = {}): Reply => ({
   status: 200,
   body: { status: 'FOUND', data: { depositId: request.id, status, ...extra } },
@@ -64,6 +74,14 @@ describe('pawaPay collections', () => {
     const { calls } = mockFetch({ '/v2/paymentpage': ACCEPTED })
     await pawaPay(config).collect({ ...request, description: 'x'.repeat(80) })
     expect(bodyOf(calls[0]).reason).toBe('x'.repeat(50))
+  })
+
+  it('4xx → rejected with the failureReason code', async () => {
+    mockFetch({ '/v2/paymentpage': INVALID_RETURN_URL })
+    expect(await caught(pawaPay(config).collect(request))).toMatchObject({
+      kind: 'rejected',
+      code: 'INVALID_PARAMETER',
+    })
   })
 
   it('normalises phone numbers', async () => {
@@ -173,6 +191,14 @@ describe('pawaPay payouts', () => {
     expect(await caught(pawaPay(config).payout(payout))).toMatchObject({
       kind: 'rejected',
       code: 'INVALID_PHONE_NUMBER',
+    })
+  })
+
+  it('4xx → rejected with the failureReason code', async () => {
+    mockFetch({ '/v2/payouts': INVALID_RETURN_URL })
+    expect(await caught(pawaPay(config).payout(payout))).toMatchObject({
+      kind: 'rejected',
+      code: 'INVALID_PARAMETER',
     })
   })
 
