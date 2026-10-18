@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { type CollectRequest, type FailureReason, MobileMoneyError, type MobileMoneyProvider } from '../src/types.js'
+import {
+  type CollectRequest,
+  type FailureReason,
+  MobileMoneyError,
+  type MobileMoneyProvider,
+  type Operator,
+} from '../src/types.js'
 import { type Call, mockFetch, type Reply } from './fetch.js'
 
 export type ContractFixtures = {
@@ -15,6 +21,8 @@ export type ContractFixtures = {
   redirectUrl?: string
   /** how a failed send is reported; default 'uncertain' carrying expectedRef */
   sendFailure?: 'uncertain' | 'rejected'
+  /** false for a static token: skips the OAuth token cases; default true */
+  token?: boolean
   status: { completed: Reply; failed: Reply; failedReason: FailureReason; pending: Reply; unknown: Reply }
 }
 
@@ -60,7 +68,9 @@ export function describeProviderContract(name: string, f: ContractFixtures) {
       expect(await caught(f.make().collect(f.request))).toMatchObject(sendFailure)
     })
 
-    it('token failure → rejected and nothing sent', async () => {
+    const itToken = f.token === false ? it.skip : it
+
+    itToken('token failure → rejected and nothing sent', async () => {
       const { calls } = mockFetch({ '/token': { status: 500 }, ...f.accepted })
       expect(await caught(f.make().collect(f.request))).toMatchObject({ kind: 'rejected', code: 'TOKEN_FAILED' })
       expect(calls.some((c) => c.url.includes(f.paths.send))).toBe(false)
@@ -77,7 +87,8 @@ export function describeProviderContract(name: string, f: ContractFixtures) {
 
     it('unsupported operator → rejected before any network call', async () => {
       const { calls } = mockFetch({})
-      const operator = f.request.operator === 'mtn' ? 'orange' : 'mtn'
+      const supported: readonly string[] = f.make().operators
+      const operator = ['mtn', 'orange', 'airtel'].find((o) => !supported.includes(o)) as Operator
       const error = await caught(f.make().collect({ ...f.request, operator }))
       expect(error).toMatchObject({ kind: 'rejected', code: 'invalid_input' })
       expect(calls).toHaveLength(0)
@@ -116,13 +127,13 @@ export function describeProviderContract(name: string, f: ContractFixtures) {
       }
     })
 
-    it('401 → refreshes the token and retries once', async () => {
+    itToken('401 → refreshes the token and retries once', async () => {
       const { calls } = mockFetch({ '/token': TOKEN, [f.paths.status]: [{ status: 401 }, f.status.completed] })
       await expect(f.make().status(ref)).resolves.toMatchObject({ status: 'completed' })
       expect(tokenCalls(calls)).toBe(2)
     })
 
-    it('shares one token across concurrent and sequential calls', async () => {
+    itToken('shares one token across concurrent and sequential calls', async () => {
       const { calls } = mockFetch({ '/token': TOKEN, [f.paths.status]: f.status.pending })
       const provider = f.make()
       await Promise.all([provider.status(ref), provider.status(ref)])

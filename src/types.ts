@@ -20,7 +20,8 @@ export type FailureReason = 'insufficient_funds' | 'declined' | 'expired' | 'unk
 export type Outcome =
   | { status: 'completed'; amount: number; currency: string }
   | { status: 'failed'; reason: FailureReason; code?: string }
-  | { status: 'pending' }
+  /** code: provider detail, e.g. pawaPay NOT_FOUND (the payer has not paid yet) */
+  | { status: 'pending'; code?: string }
 
 export interface MobileMoneyProvider {
   readonly operators: readonly Operator[]
