@@ -146,3 +146,24 @@ export function pawaPay(config: PawaPayConfig): MobileMoneyProvider & MobileMone
     },
   }
 }
+
+const CALLBACK_KINDS = [
+  ['depositId', 'deposit'],
+  ['payoutId', 'payout'],
+  ['refundId', 'refund'],
+] as const
+
+/** Which deposit, payout or refund a callback is about. Never trust its status: re-check with status / payoutStatus. */
+export function parsePawaPayCallback(rawBody: string): { kind: 'deposit' | 'payout' | 'refund'; ref: string } | null {
+  let body: Record<string, unknown>
+  try {
+    body = record(JSON.parse(rawBody))
+  } catch {
+    return null
+  }
+  for (const [field, kind] of CALLBACK_KINDS) {
+    const ref = body[field]
+    if (typeof ref === 'string' && ref) return { kind, ref }
+  }
+  return null
+}

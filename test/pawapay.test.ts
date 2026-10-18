@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { type PawaPayConfig, pawaPay } from '../src/pawapay.js'
+import { type PawaPayConfig, parsePawaPayCallback, pawaPay } from '../src/pawapay.js'
 import type { CollectRequest, Operator, PayoutRequest } from '../src/types.js'
 import { caught, describeProviderContract } from './contract.js'
 import { bodyOf, headersOf, mockFetch, type Reply } from './fetch.js'
@@ -241,5 +241,19 @@ describe('pawaPay payouts', () => {
     const { calls } = mockFetch({ '/v2/payouts/': found('ENQUEUED') })
     await pawaPay(config).payoutStatus('../x?y')
     expect(calls[0]?.url).toBe('https://pawapay.test/v2/payouts/..%2Fx%3Fy')
+  })
+})
+
+describe('parsePawaPayCallback', () => {
+  it('returns the kind and id to re-check, nothing else', () => {
+    expect(parsePawaPayCallback('{"depositId":"d1","status":"COMPLETED"}')).toEqual({ kind: 'deposit', ref: 'd1' })
+    expect(parsePawaPayCallback('{"payoutId":"p1"}')).toEqual({ kind: 'payout', ref: 'p1' })
+    expect(parsePawaPayCallback('{"refundId":"r1"}')).toEqual({ kind: 'refund', ref: 'r1' })
+  })
+
+  it('returns null for anything else, never throws', () => {
+    for (const raw of ['{}', 'not json', '[]', '{"depositId":5}', '{"depositId":""}', 'null']) {
+      expect(parsePawaPayCallback(raw)).toBeNull()
+    }
   })
 })
