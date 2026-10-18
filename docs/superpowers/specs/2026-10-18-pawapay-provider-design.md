@@ -6,9 +6,10 @@ Source: pawaPay Merchant API v2 docs (docs.pawapay.io, read 2026-10-18) and its 
 
 ## 1. Why
 
-Notch Pay's split payments (Sync) are not enabled on our account and their docs contradict themselves, so Écolage
-moves to pawaPay. pawaPay has no split either. Écolage instead collects each parent payment into its own pawaPay
-wallet and immediately pays the school out of that wallet. The library therefore needs a pawaPay provider that can
+Notch Pay's split payments (Sync) were not enabled on our account and its docs contradicted its API, so Écolage
+moves to pawaPay and Notch Pay is dropped from the library (its branch `feat/notchpay` is abandoned unmerged).
+pawaPay has no split either. Écolage instead collects each parent payment into its own pawaPay wallet and
+immediately pays the school out of that wallet. The library therefore needs a pawaPay provider that can
 **collect** (hosted payment page) and **pay out** to a mobile money number. `@halifage/mobile-money` stays the single
 payment library across projects.
 
@@ -59,8 +60,7 @@ the payer cannot switch wallets), `amountDetails: { amount, currency: 'XAF' }`, 
 `reason: description` cut to 50 chars. Returns `{ ref: id, redirectUrl }`.
 
 - `callbackUrl` is ignored: pawaPay posts callbacks to URLs set in its dashboard (document it).
-- `payee` is rejected with `split_unsupported` (pawaPay cannot split), like the other providers.
-- 4xx → `rejected`; network error or 5xx → `rejected` too (as `orangeWebPay`/`notchPay`: without the page the payer
+- 4xx → `rejected`; network error or 5xx → `rejected` too (as `orangeWebPay`: without the page the payer
   cannot pay).
 
 ### 5.3 Status of a deposit
@@ -113,7 +113,7 @@ set per type in the pawaPay dashboard (System configuration → Callback URLs).
 
 ### 5.6 Verification against the sandbox
 
-- `scripts/live-pawapay.mjs`, like `live-notchpay.mjs`: `PAWAPAY_TOKEN` from `.env.live`, raw responses printed with
+- `scripts/live-pawapay.mjs`, like `live-orange-webpay.mjs`: `PAWAPAY_TOKEN` from `.env.live`, raw responses printed with
   the token redacted; modes `collect <phone> <amount>`, `payout <phone> <amount>`, `listen <port>`.
 - Sandbox numbers (docs/test_numbers): deposits MTN `237653456789` completed, `237653456039` not approved;
   Orange `237693456789` completed, `237693456049` insufficient balance. Payouts MTN `237653456789` completed,
@@ -131,8 +131,10 @@ set per type in the pawaPay dashboard (System configuration → Callback URLs).
 
 ## 7. Calls made by Claude
 
-- Branch `feat/pawapay` cut from `feat/notchpay`: it reuses that branch's contract-test flags (`token`, `split`) and
-  `rejectSplit`.
+- Branch `feat/pawapay` cut from `origin/dev` (user's decision). From the abandoned Notch Pay work it re-applies
+  only what pawaPay needs in the shared contract test: a `token?: boolean` fixture flag (pawaPay has a static
+  bearer token, so the OAuth token-cache cases are skipped) and the "unsupported operator" case picking an
+  operator outside `operators` (pawaPay supports both). No `payee` / `rejectSplit`: no provider can split.
 - No request or callback signatures; callbacks only name the id to re-check.
 - Deposit `NOT_FOUND` is `pending` with a code, payout `NOT_FOUND` is `failed` (§5.3, §5.4).
 
