@@ -15,7 +15,8 @@ const request: CollectRequest = {
   returnUrl: 'https://app.test/checkout/pending',
 }
 const PAGE = 'https://sandbox.paywith.pawapay.io/?token=abc'
-const ACCEPTED: Reply = { status: 200, body: { redirectUrl: PAGE } }
+// shapes as observed in the pawaPay sandbox, 2026-10-18
+const ACCEPTED: Reply = { status: 201, body: { redirectUrl: PAGE } }
 const dep = (status: string, extra: Record<string, unknown> = {}): Reply => ({
   status: 200,
   body: { status: 'FOUND', data: { depositId: request.id, status, ...extra } },
@@ -32,7 +33,7 @@ describeProviderContract('pawaPay', {
   expectedRef: request.id,
   redirectUrl: PAGE,
   status: {
-    completed: dep('COMPLETED', { amount: '10', currency: 'XAF' }),
+    completed: dep('COMPLETED', { amount: '10.00', currency: 'XAF' }),
     failed: dep('FAILED', { failureReason: { failureCode: 'PAYMENT_NOT_APPROVED' } }),
     failedReason: 'declined',
     pending: dep('PROCESSING'),

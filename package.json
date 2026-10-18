@@ -1,7 +1,7 @@
 {
   "name": "@halifage/mobile-money",
-  "version": "0.2.0",
-  "description": "Mobile money collections for Cameroon: Orange and MTN direct, extensible to aggregators",
+  "version": "0.3.0",
+  "description": "Mobile money collections and payouts for Cameroon: Orange and MTN direct, pawaPay",
   "license": "MIT",
   "repository": {
     "type": "git",

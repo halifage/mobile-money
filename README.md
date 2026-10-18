@@ -1,7 +1,7 @@
 # @halifage/mobile-money
 
-Mobile money collections for Cameroon. Talks to Orange Money and MTN MoMo directly and returns normalised
-outcomes. It stores nothing and settles nothing: your app persists the `ref`, confirms every payment with
+Mobile money collections and payouts for Cameroon. Talks to Orange Money and MTN MoMo directly, or through pawaPay,
+and returns normalised outcomes. It stores nothing and settles nothing: your app persists the `ref`, confirms every payment with
 `status()`, and settles.
 
 Node 22+, ESM, no runtime dependencies.
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 |---|---|
 | `{ status: 'completed', amount, currency }` | Paid. Check `amount` against what you asked for. |
 | `{ status: 'failed', reason, code? }` | Final. `reason`: `insufficient_funds`, `declined`, `expired`, `unknown`. |
-| `{ status: 'pending' }` | Not final yet, including any status string the SDK does not know. Poll again. |
+| `{ status: 'pending', code? }` | Not final yet, including any status string the SDK does not know. Poll again. pawaPay sets `code: 'NOT_FOUND'` while the payer has not pressed Pay. |
 
 ## Errors
 
@@ -77,6 +77,7 @@ export async function POST(request: Request) {
 | `orangeDirect` | `orange` | `username`, `password`, `authToken` (X-AUTH-TOKEN), `merchantMsisdn`, `pin`, `baseUrl?` (default `https://api-s1.orange.cm`) |
 | `orangeWebPay` | `orange` | `clientId`, `clientSecret`, `merchantKey`, `environment` (`dev` sandbox in test currency `OUV`, or `cm`), `baseUrl?` (default `https://api.orange.com`) |
 | `mtnDirect` | `mtn` | `subscriptionKey`, `apiUser`, `apiKey`, `environment` (`sandbox` or `mtncameroon`), `baseUrl?` |
+| `pawaPay` | `mtn`, `orange` | `token` (API token from the pawaPay dashboard), `environment` (`sandbox` or `production`), `baseUrl?` |
 
 - Orange wants a 9-digit local payer number; the SDK strips `+237`.
 - `orangeWebPay` is redirect-based: pass `returnUrl`, then send the payer to the `redirectUrl` that `collect` returns,
@@ -87,7 +88,31 @@ export async function POST(request: Request) {
 - MTN `status()` returns `failed` with code `NOT_FOUND` for a payment MTN never received. After an `uncertain`
   collect, wait a few minutes before treating `NOT_FOUND` as final.
 
-Your app picks the provider per operator. To add an aggregator (Paynote, pawaPay), implement
+- `pawaPay` collects through its hosted Payment Page: pass `returnUrl`, send the payer to `redirectUrl`. `id` must be a
+  UUID and is the `ref`; the payer's number is fixed on the page. A deposit stays `pending` with code `NOT_FOUND`
+  until the payer presses Pay; the page expires after 15 minutes without a callback, so the caller decides when a
+  long `NOT_FOUND` is dead. `callbackUrl` is ignored: pawaPay posts callbacks to the URLs set in its dashboard.
+
+### Payouts
+
+`pawaPay()` also implements `MobileMoneyPayouts`:
+
+```ts
+const { ref } = await provider.payout({ id: uuid, operator: 'orange', amount: 20000, phone: '+237693456789', message: 'Ecolage versement' })
+await provider.payoutStatus(ref) // completed | failed (reason 'unknown', code = pawaPay failureCode) | pending
+```
+
+The recipient gets exactly `amount`; pawaPay takes its fee from your wallet. `message` (4–22 chars) is shown to the
+recipient, else omitted. Re-sending the same `id` is safe (pawaPay answers `DUPLICATE_IGNORED`). `rejected` means
+nothing was sent; `uncertain` (network error, 5xx, `UNKNOWN_ERROR`) carries `ref`: poll `payoutStatus`. A payout
+pawaPay never received is `failed` with code `NOT_FOUND`.
+
+### Callbacks
+
+`parsePawaPayCallback(rawBody)` returns `{ kind: 'deposit' | 'payout' | 'refund', ref }` or `null`. It never returns a
+status: call `status(ref)` or `payoutStatus(ref)`. Without callbacks configured, polling alone works.
+
+Your app picks the provider per operator. To add another aggregator, implement
 `MobileMoneyProvider` and run `describeProviderContract` from `test/contract.ts` against it.
 
 ## Observed provider behaviour
@@ -101,6 +126,13 @@ Your app picks the provider per operator. To add an aggregator (Paynote, pawaPay
 - Orange Web Payment: sandbox path `dev/v1` with currency `OUV`, production `cm/v1` with `XAF` (per open-source
   integrations; official reference is gated). Token path (`/oauth/v3/token`), `order_id` limits and status spellings
   are unconfirmed until a sandbox run.
+
+- pawaPay sandbox (2026-10-18), all as mocked in the unit tests: `POST /v2/paymentpage` answers 201 with
+  `redirectUrl` and accepts `phoneNumber` + `amountDetails` for CMR. The page shows the fixed number but still asks
+  the payer to pick MTN or Orange. Deposit status is `NOT_FOUND` until Pay is pressed, then `FOUND` with `COMPLETED`
+  or `FAILED` (`PAYMENT_NOT_APPROVED`, `INSUFFICIENT_BALANCE`) within seconds; amounts come back as `"100.00"`.
+  Payouts answer `ACCEPTED` and settle within 5 s to `COMPLETED` or `FAILED` (`RECIPIENT_NOT_FOUND`,
+  `WALLET_LIMIT_REACHED`). Callbacks were not exercised (none configured): polling only.
 
 ## Development
 
@@ -127,4 +159,12 @@ Orange Web Payment sandbox (no real money with `ORANGE_WEBPAY_ENVIRONMENT=dev`):
 
 ```bash
 npm run build && node --env-file=.env.live scripts/live-orange-webpay.mjs 10
+```
+
+pawaPay sandbox (no real money): put `PAWAPAY_TOKEN` in `.env.live` (sandbox test numbers: docs.pawapay.io), then:
+
+```bash
+npm run build && node --env-file=.env.live scripts/live-pawapay.mjs collect 237653456789 100   # open the URL, pay
+node --env-file=.env.live scripts/live-pawapay.mjs payout 237693456789 100
+node --env-file=.env.live scripts/live-pawapay.mjs listen 8787                                  # callback bodies
 ```
