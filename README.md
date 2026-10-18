@@ -132,7 +132,8 @@ Your app picks the provider per operator. To add another aggregator, implement
   the payer to pick MTN or Orange. Deposit status is `NOT_FOUND` until Pay is pressed, then `FOUND` with `COMPLETED`
   or `FAILED` (`PAYMENT_NOT_APPROVED`, `INSUFFICIENT_BALANCE`) within seconds; amounts come back as `"100.00"`.
   Payouts answer `ACCEPTED` and settle within 5 s to `COMPLETED` or `FAILED` (`RECIPIENT_NOT_FOUND`,
-  `WALLET_LIMIT_REACHED`). Callbacks were not exercised (none configured): polling only.
+  `WALLET_LIMIT_REACHED`). Callbacks were not exercised (none configured): polling only. A non-https `returnUrl`
+  (`http://localhost`) is rejected with HTTP 400 `INVALID_PARAMETER`; 4xx errors carry `failureReason.failureCode`.
 
 ## Development
 

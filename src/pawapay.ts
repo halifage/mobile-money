@@ -40,6 +40,8 @@ function msisdn(phone: string): string {
 }
 
 const failureCode = (value: Record<string, unknown>) => str(record(value.failureReason).failureCode)
+const rejected = (result: HttpResult) =>
+  new MobileMoneyError('rejected', failureCode(record(result.body)) || providerCode(result))
 
 /** Shared by deposits and payouts: only NOT_FOUND differs. */
 function lookup(body: Record<string, unknown>, notFound: Outcome, reason: (code: string) => FailureReason): Outcome {
@@ -99,7 +101,7 @@ export function pawaPay(config: PawaPayConfig): MobileMoneyProvider & MobileMone
         throw new MobileMoneyError('rejected', 'NETWORK')
       }
       const redirectUrl = str(record(result.body).redirectUrl)
-      if (!ok(result) || !redirectUrl) throw new MobileMoneyError('rejected', providerCode(result))
+      if (!ok(result) || !redirectUrl) throw rejected(result)
       return { ref: request.id, redirectUrl }
     },
 
@@ -130,7 +132,7 @@ export function pawaPay(config: PawaPayConfig): MobileMoneyProvider & MobileMone
       }
       const body = record(result.body)
       if (result.status >= 500) throw new MobileMoneyError('uncertain', `HTTP_${result.status}`, request.id)
-      if (!ok(result)) throw new MobileMoneyError('rejected', providerCode(result))
+      if (!ok(result)) throw rejected(result)
       if (body.status === 'ACCEPTED' || body.status === 'DUPLICATE_IGNORED') return { ref: request.id }
       const code = failureCode(body)
       if (body.status === 'REJECTED' && code !== 'UNKNOWN_ERROR')
