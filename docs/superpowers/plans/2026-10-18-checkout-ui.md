@@ -87,15 +87,15 @@
   - `OPERATORS: Record<Operator, { name: string; menuCode?: string; Logo: () => JSX.Element }>`: mtn `{ name: 'MTN MoMo', menuCode: '*126#' }`, orange `{ name: 'Orange Money' }`.
   - Icons: `CheckIcon`, `CrossIcon`, `ClockIcon`, `PhoneIcon`, `ChevronIcon`, each `() => JSX.Element`, `aria-hidden`, `currentColor`, 24×24 viewBox.
 
-- [ ] **Step 1: Failing tests** `test/checkout/messages.test.ts`:
+- [x] **Step 1: Failing tests** `test/checkout/messages.test.ts`:
   - `formatAmount(20100, 'fr')` → `'20 100 FCFA'`; `formatAmount(20100, 'en')` → `'20,100 FCFA'`.
   - `fill('Payer {amount}', { amount: 'X' })` → `'Payer X'`; `fill('{a} {b}', { a: '1' })` → `'1 {b}'`.
   - `messagesFor('fr').reason_wrong_number_title` → `"Ce numéro n'est pas un compte {op}"`; `messagesFor('en').payButton` → `'Pay {amount}'`; `messagesFor('fr', { payButton: 'Régler {amount}' }).payButton` → `'Régler {amount}'`.
   - `Object.keys(messagesFor('en'))` equals `Object.keys(messagesFor('fr'))`.
-- [ ] **Step 2:** Run → FAIL. Implement messages from spec §5.5 verbatim.
-- [ ] **Step 3:** Logos: fetch the MTN and Orange corporate logo SVGs from Wikimedia Commons (`File:MTN Logo.svg`, `File:Orange logo.svg`; if a file is missing, the operator's public brand page). Strip metadata, inline the paths as JSX in `operators.tsx`, `role="img"` + `aria-label` = operator name. Note each source URL in a comment above the component (README credit in Task 5).
-- [ ] **Step 4:** Icons: simple stroke paths (check, x, clock, phone handset, chevron-down).
-- [ ] **Step 5:** Run → PASS. Four checks. Commit `feat(checkout): copy, operator data, logos, icons`.
+- [x] **Step 2:** Run → FAIL. Implement messages from spec §5.5 verbatim.
+- [x] **Step 3:** Logos: fetch the MTN and Orange corporate logo SVGs from Wikimedia Commons (`File:MTN Logo.svg`, `File:Orange logo.svg`; if a file is missing, the operator's public brand page). Strip metadata, inline the paths as JSX in `operators.tsx`, `role="img"` + `aria-label` = operator name. Note each source URL in a comment above the component (README credit in Task 5).
+- [x] **Step 4:** Icons: simple stroke paths (check, x, clock, phone handset, chevron-down).
+- [x] **Step 5:** Run → PASS. Four checks. Commit `feat(checkout): copy, operator data, logos, icons`.
 
 ### Task 4: `Checkout` component and CSS
 
@@ -156,6 +156,8 @@ Behaviour to implement (spec §5.3 is the state table):
 ## Ledger
 
 - Ruling (Task 1): biome lint failed on the committed mockup HTML (24 a11y errors) — excluded `docs/superpowers/mockups` in `biome.json` — cost if wrong: mockups go unlinted (they are reference only).
+- Ruling (Task 3): `formatAmount` keeps Intl's narrow no-break space in fr and joins ` FCFA` with a no-break space, so an amount never wraps — tests compare with `\u202f`/`\u00a0` — cost if wrong: hosts comparing plain-space strings.
+- Ruling (Task 3): copy the spec gives only in FR — EN "Open the {op} app to see your pending approvals" (help without menu code) and "Try again" (retry without phone) are my translations — cost if wrong: two strings to edit.
 
 ## Stop points
 
