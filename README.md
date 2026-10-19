@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 | `status()` result | Meaning |
 |---|---|
 | `{ status: 'completed', amount, currency }` | Paid. Check `amount` against what you asked for. |
-| `{ status: 'failed', reason, code? }` | Final. `reason`: `insufficient_funds`, `declined`, `expired`, `unknown`. |
+| `{ status: 'failed', reason, code? }` | Final. `reason`: `insufficient_funds`, `declined`, `expired`, `wrong_number`, `unavailable`, `unknown`. |
 | `{ status: 'pending', code? }` | Not final yet, including any status string the SDK does not know. Poll again. pawaPay sets `code: 'NOT_FOUND'` while the payer has not pressed Pay. |
 
 ## Errors

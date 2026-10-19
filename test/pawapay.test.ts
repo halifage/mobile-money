@@ -121,6 +121,14 @@ describe('pawaPay collections', () => {
     })
   })
 
+  it.each([
+    ['PAYER_NOT_FOUND', 'wrong_number'],
+    ['PROVIDER_TEMPORARILY_UNAVAILABLE', 'unavailable'],
+  ])('maps deposit failure %s to %s', async (code, reason) => {
+    mockFetch({ '/v2/deposits/': dep('FAILED', { failureReason: { failureCode: code } }) })
+    await expect(pawaPay(config).status(request.id)).resolves.toEqual({ status: 'failed', reason, code })
+  })
+
   it('reports a status body without FOUND or NOT_FOUND as unavailable', async () => {
     for (const body of [{}, { status: 'WEIRD' }]) {
       mockFetch({ '/v2/deposits/': { status: 200, body } })

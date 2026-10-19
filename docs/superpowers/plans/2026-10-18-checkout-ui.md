@@ -42,14 +42,14 @@
 **Interfaces:**
 - Produces: `FailureReason = 'insufficient_funds' | 'declined' | 'expired' | 'wrong_number' | 'unavailable' | 'unknown'`
 
-- [ ] **Step 1: Failing tests**, next to the existing reason tests, same style:
+- [x] **Step 1: Failing tests**, next to the existing reason tests, same style:
   - pawaPay `failureCode: 'PAYER_NOT_FOUND'` → `{ status: 'failed', reason: 'wrong_number', code: 'PAYER_NOT_FOUND' }`
   - pawaPay `failureCode: 'PROVIDER_TEMPORARILY_UNAVAILABLE'` → `reason: 'unavailable'`
   - MTN `reason: { code: 'PAYER_NOT_FOUND' }` → `reason: 'wrong_number'`; `reason: 'SERVICE_UNAVAILABLE'` → `reason: 'unavailable'`
-- [ ] **Step 2:** `npx vitest run test/pawapay.test.ts test/mtn.test.ts` → the 4 new tests FAIL.
-- [ ] **Step 3:** Extend the union in `src/types.ts`; add the two entries to `DEPOSIT_FAILURE` (pawaPay) and `REASONS` (MTN).
-- [ ] **Step 4:** Same command → PASS. Run the four checks.
-- [ ] **Step 5:** Commit `feat: wrong_number and unavailable failure reasons`. README "Outcomes" section: list the six reasons.
+- [x] **Step 2:** `npx vitest run test/pawapay.test.ts test/mtn.test.ts` → the 4 new tests FAIL.
+- [x] **Step 3:** Extend the union in `src/types.ts`; add the two entries to `DEPOSIT_FAILURE` (pawaPay) and `REASONS` (MTN).
+- [x] **Step 4:** Same command → PASS. Run the four checks.
+- [x] **Step 5:** Commit `feat: wrong_number and unavailable failure reasons`. README "Outcomes" section: list the six reasons.
 
 ### Task 2: Checkout tooling + phone helpers
 
@@ -152,6 +152,10 @@ Behaviour to implement (spec §5.3 is the state table):
 - [ ] **Step 5:** README: new "Checkout UI" section after "Callbacks": install (`react >=19`), CSS import, props table, status table (from spec §5.2/§5.3), theming variables, one example of wiring `{ ref, redirectUrl? }` to `NextAction`, logo sources + "trademarks of their owners" notice, `npm run demo` in Development.
 - [ ] **Step 6:** Four checks + `npm run smoke`. Commit `feat(checkout): package export, demo, readme`.
 - [ ] **Step 7:** Push `feat/checkout-ui`, open PR against `dev` (caveman body: what, screenshots via `docs/checkout/*.png` raw links, test list, "release left to owner"), ending with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+
+## Ledger
+
+- Ruling (Task 1): biome lint failed on the committed mockup HTML (24 a11y errors) — excluded `docs/superpowers/mockups` in `biome.json` — cost if wrong: mockups go unlinted (they are reference only).
 
 ## Stop points
 

@@ -29,6 +29,8 @@ const REASONS: Record<string, FailureReason> = {
   NOT_ENOUGH_FUNDS: 'insufficient_funds',
   APPROVAL_REJECTED: 'declined',
   EXPIRED: 'expired',
+  PAYER_NOT_FOUND: 'wrong_number',
+  SERVICE_UNAVAILABLE: 'unavailable',
 }
 
 /** 2376XXXXXXXX, or a sandbox test number in sandbox, or null. */
