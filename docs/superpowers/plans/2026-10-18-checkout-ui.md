@@ -142,13 +142,13 @@ Behaviour to implement (spec §5.3 is the state table):
 **Interfaces:**
 - Consumes: built `dist/checkout/index.js`, `dist/checkout.css`.
 
-- [ ] **Step 1:** `package.json`:
+- [x] **Step 1:** `package.json`:
   - `exports["./checkout"] = { types: "./dist/checkout/index.d.ts", import: "./dist/checkout/index.js" }`, `exports["./checkout.css"] = "./dist/checkout.css"`.
   - `build`: `tsc -p tsconfig.build.json && cp src/checkout/checkout.css dist/checkout.css`.
   - `demo`: `npm run build && node scripts/demo.mjs`.
-- [ ] **Step 2:** Smoke test: keep the root check in the temp project **before** React is installed (proves the root is React-free); then `npm install react@19 react-dom@19` there and check `Object.keys(await import('@halifage/mobile-money/checkout'))` equals `['Checkout']` and that `node_modules/@halifage/mobile-money/dist/checkout.css` exists. `npm run smoke` → `smoke ok`.
-- [ ] **Step 3:** `scripts/demo.mjs`: `renderToStaticMarkup` one `Checkout` per state into `demo/index.html` with `checkout.css` inlined, each under a heading naming the state. States: idle (empty), idle (valid MTN number), initiated, approve_on_phone mtn (help open: render then replace `<details class="mm-help">` with `<details class="mm-help" open>` in the string), approve_on_phone orange, redirect, pending_confirmation, succeeded (with an `actions` link), failed × 6 reasons, expired, idle with a 70-char payee, idle `locale="en"`. Page body max-width none so each state shows at the viewport width.
-- [ ] **Step 4:** `npm run demo`, open `demo/index.html` in a browser (Playwright MCP or the in-app browser), full-page screenshots at 375, 768 and 1280 px → `docs/checkout/checkout-375.png`, `-768.png`, `-1280.png`. Check: no horizontal scroll at 375 (`document.documentElement.scrollWidth <= 375`), two columns at 768 and 1280, long payee wraps.
+- [x] **Step 2:** Smoke test: keep the root check in the temp project **before** React is installed (proves the root is React-free); then `npm install react@19 react-dom@19` there and check `Object.keys(await import('@halifage/mobile-money/checkout'))` equals `['Checkout']` and that `node_modules/@halifage/mobile-money/dist/checkout.css` exists. `npm run smoke` → `smoke ok`.
+- [x] **Step 3:** `scripts/demo.mjs`: `renderToStaticMarkup` one `Checkout` per state into `demo/index.html` with `checkout.css` inlined, each under a heading naming the state. States: idle (empty), idle (valid MTN number), initiated, approve_on_phone mtn (help open: render then replace `<details class="mm-help">` with `<details class="mm-help" open>` in the string), approve_on_phone orange, redirect, pending_confirmation, succeeded (with an `actions` link), failed × 6 reasons, expired, idle with a 70-char payee, idle `locale="en"`. Page body max-width none so each state shows at the viewport width.
+- [x] **Step 4:** `npm run demo`, open `demo/index.html` in a browser (Playwright MCP or the in-app browser), full-page screenshots at 375, 768 and 1280 px → `docs/checkout/checkout-375.png`, `-768.png`, `-1280.png`. Check: no horizontal scroll at 375 (`document.documentElement.scrollWidth <= 375`), two columns at 768 and 1280, long payee wraps.
 - [ ] **Step 5:** README: new "Checkout UI" section after "Callbacks": install (`react >=19`), CSS import, props table, status table (from spec §5.2/§5.3), theming variables, one example of wiring `{ ref, redirectUrl? }` to `NextAction`, logo sources + "trademarks of their owners" notice, `npm run demo` in Development.
 - [ ] **Step 6:** Four checks + `npm run smoke`. Commit `feat(checkout): package export, demo, readme`.
 - [ ] **Step 7:** Push `feat/checkout-ui`, open PR against `dev` (caveman body: what, screenshots via `docs/checkout/*.png` raw links, test list, "release left to owner"), ending with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
@@ -165,6 +165,9 @@ Behaviour to implement (spec §5.3 is the state table):
 - Ruling (Task 4): visible labels "Opérateur" / "Numéro {op}" (spec §5.5 copy + §5.6 real labels; mockups omit them) — cost if wrong: two small lines to hide.
 - Ruling (Task 4): on narrow screens the summary (amount, payee) shows only in the form and approve-on-phone views, as in the mockups; from 600 px it is always the left column — cost if wrong: one CSS rule.
 - Ruling (Task 4): done steps show only their number, the current one its label (mockup B); invalid-number line shows after the field loses focus; `--mm-muted` is `#6b6b6b` (mockup `#777` fails AA contrast on white) — cost if wrong: CSS tweaks.
+- Ruling (Task 5): screenshots taken with headless Chrome through a fixed-width iframe (headless Chrome enforces a minimum window width, so a bare 375 px window renders wider) — cost if wrong: none, checked at each width.
+- Ruling (Task 5): package/demo/screenshots committed before the README (stop point between them) — cost if wrong: two commits instead of one.
+- Task 5 Step 4 checks: 375 px `scrollWidth` 375 (no horizontal scroll); `.mm-layout` two columns at 768 (265/397 px) and 1280 (470/704 px); 70-char payee wraps.
 
 ## Stop points
 

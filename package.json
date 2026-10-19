@@ -15,17 +15,23 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./checkout": {
+      "types": "./dist/checkout/index.d.ts",
+      "import": "./dist/checkout/index.js"
+    },
+    "./checkout.css": "./dist/checkout.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && cp src/checkout/checkout.css dist/checkout.css",
     "test": "vitest run",
     "type-check": "tsc",
     "lint": "biome check .",
     "smoke": "npm run build && node test/package-smoke.mjs",
+    "demo": "npm run build && node scripts/demo.mjs",
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {

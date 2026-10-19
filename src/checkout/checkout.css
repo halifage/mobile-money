@@ -149,6 +149,7 @@
   cursor: pointer;
 }
 .mm-tile .mm-logo {
+  width: 56px;
   height: 32px;
 }
 .mm-tile input {
@@ -252,6 +253,9 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+}
+.mm-body > .mm-logo {
+  align-self: flex-start;
 }
 .mm-body--center {
   align-items: center;
