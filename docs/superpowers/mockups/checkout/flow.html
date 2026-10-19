@@ -1,0 +1,78 @@
+<style>
+  .row{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px}
+  .ph{width:200px;border:1px solid #ccc;border-radius:18px;padding:14px 12px;background:#fff;color:#222;font:12px/1.4 system-ui;min-height:300px;display:flex;flex-direction:column;gap:8px}
+  .cap{font:11px system-ui;color:#888;text-align:center;margin-top:4px}
+  .chip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:22px;border-radius:5px;font-weight:700;font-size:10px}
+  .mtn{background:#FFCC00;color:#111}.om{background:#FF6600;color:#fff}
+  .tile{border:1px solid #ddd;border-radius:9px;padding:7px;display:flex;gap:6px;align-items:center}
+  .sel{border-color:#0A6B3B;box-shadow:0 0 0 2px #0A6B3B22}
+  .in{border:1px solid #ddd;border-radius:9px;padding:7px;display:flex;gap:6px}
+  .pre{color:#666;border-right:1px solid #ddd;padding-right:6px}
+  .btn{background:#0A6B3B;color:#fff;border-radius:9px;padding:9px;text-align:center;font-weight:600}
+  .amt{font-size:18px;font-weight:700}
+  .bar{height:4px;border-radius:2px;background:linear-gradient(90deg,#eee,#ccc,#eee)}
+  .steps{display:flex;gap:4px;font-size:10px;color:#999}.steps b{color:#0A6B3B}
+  .steps span{flex:1;border-top:3px solid #ddd;padding-top:3px}.steps span.on{border-color:#0A6B3B}
+  .ok{width:44px;height:44px;border-radius:50%;background:#e7f1ea;color:#0A6B3B;display:flex;align-items:center;justify-content:center;font-size:22px;margin:8px auto 0}
+  .muted{color:#777}
+</style>
+
+<h2>How should the checkout move from step to step?</h2>
+<p class="subtitle">Same content in both. The difference is how the parent knows where they are. Logos shown as coloured badges for now (logos are a separate question).</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>One card that changes in place</h3>
+      <p>No step bar. The card swaps its content: form → waiting → result. Fewest words on screen.</p>
+      <div class="row">
+        <div><div class="ph">
+          <div class="muted">Payer</div><div class="amt">20 100 FCFA</div><div class="muted">Collège La Réussite</div>
+          <div class="tile sel"><span class="chip mtn">MTN</span>MTN MoMo</div>
+          <div class="tile"><span class="chip om">OM</span>Orange Money</div>
+          <div class="in"><span class="pre">+237</span>6XX XX XX XX</div>
+          <div class="btn">Payer 20 100 FCFA</div>
+        </div><div class="cap">form</div></div>
+        <div><div class="ph">
+          <span class="chip mtn">MTN</span>
+          <div><b>Validez 20 100 FCFA</b> pour Collège La Réussite sur votre téléphone MTN</div>
+          <div class="bar"></div>
+          <div class="muted">Pas reçu la demande ?<br>Composez <u>*126#</u></div>
+        </div><div class="cap">waiting</div></div>
+        <div><div class="ph">
+          <div class="ok">✓</div><div style="text-align:center"><b>Paiement reçu</b><br>20 100 FCFA</div>
+        </div><div class="cap">result</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Step bar on top (CarteScolaire style)</h3>
+      <p>3 labelled steps: Détails → Validation → Reçu. Parent always sees how far along they are.</p>
+      <div class="row">
+        <div><div class="ph">
+          <div class="steps"><span class="on"><b>1 Détails</b></span><span>2 Validation</span><span>3 Reçu</span></div>
+          <div class="amt">20 100 FCFA</div><div class="muted">Collège La Réussite</div>
+          <div class="tile sel"><span class="chip mtn">MTN</span>MTN MoMo</div>
+          <div class="tile"><span class="chip om">OM</span>Orange Money</div>
+          <div class="in"><span class="pre">+237</span>6XX XX XX XX</div>
+          <div class="btn">Payer</div>
+        </div><div class="cap">form</div></div>
+        <div><div class="ph">
+          <div class="steps"><span class="on">1</span><span class="on"><b>2 Validation</b></span><span>3 Reçu</span></div>
+          <span class="chip mtn">MTN</span>
+          <div><b>Validez 20 100 FCFA</b> pour Collège La Réussite sur votre téléphone MTN</div>
+          <div class="bar"></div>
+          <div class="muted">Pas reçu la demande ?<br>Composez <u>*126#</u></div>
+        </div><div class="cap">waiting</div></div>
+        <div><div class="ph">
+          <div class="steps"><span class="on">1</span><span class="on">2</span><span class="on"><b>3 Reçu</b></span></div>
+          <div class="ok">✓</div><div style="text-align:center"><b>Paiement reçu</b><br>20 100 FCFA</div>
+        </div><div class="cap">result</div></div>
+      </div>
+    </div>
+  </div>
+</div>

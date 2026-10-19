@@ -1,0 +1,98 @@
+export type Locale = 'fr' | 'en'
+
+const fr = {
+  stepDetails: 'Détails',
+  stepApproval: 'Validation',
+  stepChecking: 'Vérification',
+  stepFailed: 'Échec',
+  stepReceipt: 'Reçu',
+  operatorLabel: 'Opérateur',
+  phoneLabel: 'Numéro {op}',
+  invalidPhone: 'Entrez un numéro camerounais à 9 chiffres',
+  payButton: 'Payer {amount}',
+  approveCheckPhone: 'Regardez votre téléphone {op}',
+  approveEnterPin: 'Entrez votre code secret',
+  approveKeepOpen: 'Gardez cette page ouverte',
+  helpTitle: 'Pas reçu la demande ?',
+  helpDial: 'Composez ce code pour voir vos validations en attente :',
+  helpOpenApp: "Ouvrez l'application {op} pour voir vos validations en attente",
+  redirect: 'Redirection vers la page de paiement…',
+  pendingTitle: 'Nous vérifions votre paiement',
+  pendingBody: 'Vous pouvez fermer cette page : le reçu apparaîtra ici.',
+  successTitle: 'Paiement reçu',
+  successAmount: 'Montant',
+  successPayee: 'Pour',
+  successOperator: 'Opérateur',
+  successReference: 'Référence',
+  successDate: 'Date',
+  reason_insufficient_funds_title: 'Solde insuffisant',
+  reason_insufficient_funds_body: 'Rechargez votre compte {op} puis réessayez.',
+  reason_declined_title: 'Paiement refusé',
+  reason_declined_body: 'La demande a été refusée sur le téléphone.',
+  reason_expired_title: 'Aucune validation reçue à temps',
+  reason_expired_body: 'La demande a expiré.',
+  reason_wrong_number_title: "Ce numéro n'est pas un compte {op}",
+  reason_wrong_number_body: "Vérifiez le numéro ou changez d'opérateur.",
+  reason_unavailable_title: '{op} est indisponible',
+  reason_unavailable_body: 'Réessayez dans quelques minutes.',
+  reason_unknown_title: "Le paiement n'a pas abouti",
+  reason_unknown_body: 'Réessayez ou changez de numéro.',
+  retry: 'Réessayer au {phone}',
+  retryNoPhone: 'Réessayer',
+  change: "Changer de numéro ou d'opérateur",
+}
+
+export type Messages = typeof fr
+
+const en: Messages = {
+  stepDetails: 'Details',
+  stepApproval: 'Approval',
+  stepChecking: 'Checking',
+  stepFailed: 'Failed',
+  stepReceipt: 'Receipt',
+  operatorLabel: 'Operator',
+  phoneLabel: '{op} number',
+  invalidPhone: 'Enter a 9-digit Cameroon number',
+  payButton: 'Pay {amount}',
+  approveCheckPhone: 'Check your {op} phone',
+  approveEnterPin: 'Enter your PIN',
+  approveKeepOpen: 'Keep this page open',
+  helpTitle: "Didn't get the request?",
+  helpDial: 'Dial this code to see your pending approvals:',
+  helpOpenApp: 'Open the {op} app to see your pending approvals',
+  redirect: 'Taking you to the payment page…',
+  pendingTitle: 'We are checking your payment',
+  pendingBody: 'You can close this page: the receipt will appear here.',
+  successTitle: 'Payment received',
+  successAmount: 'Amount',
+  successPayee: 'To',
+  successOperator: 'Operator',
+  successReference: 'Reference',
+  successDate: 'Date',
+  reason_insufficient_funds_title: 'Insufficient balance',
+  reason_insufficient_funds_body: 'Top up your {op} account and try again.',
+  reason_declined_title: 'Payment declined',
+  reason_declined_body: 'The request was declined on the phone.',
+  reason_expired_title: 'No approval in time',
+  reason_expired_body: 'The request expired.',
+  reason_wrong_number_title: 'This number is not a {op} account',
+  reason_wrong_number_body: 'Check the number or switch operator.',
+  reason_unavailable_title: '{op} is unavailable',
+  reason_unavailable_body: 'Try again in a few minutes.',
+  reason_unknown_title: 'The payment did not go through',
+  reason_unknown_body: 'Try again or use another number.',
+  retry: 'Try again on {phone}',
+  retryNoPhone: 'Try again',
+  change: 'Change number or operator',
+}
+
+export const messagesFor = (locale: Locale, overrides?: Partial<Messages>): Messages => ({
+  ...(locale === 'en' ? en : fr),
+  ...overrides,
+})
+
+export const fill = (template: string, vars: Record<string, string>) =>
+  template.replace(/\{(\w+)\}/g, (match, name: string) => vars[name] ?? match)
+
+/** `20 100 FCFA` (fr) / `20,100 FCFA` (en), with a no-break space before FCFA. */
+export const formatAmount = (amount: number, locale: Locale) => `${new Intl.NumberFormat(locale).format(amount)} FCFA`

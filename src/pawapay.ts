@@ -22,6 +22,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const DEPOSIT_FAILURE: Record<string, FailureReason> = {
   INSUFFICIENT_BALANCE: 'insufficient_funds',
   PAYMENT_NOT_APPROVED: 'declined',
+  PAYER_NOT_FOUND: 'wrong_number',
+  PROVIDER_TEMPORARILY_UNAVAILABLE: 'unavailable',
 }
 
 const invalid = () => new MobileMoneyError('rejected', 'invalid_input')

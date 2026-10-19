@@ -1,0 +1,80 @@
+<style>
+  .row{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px}
+  .ph{width:210px;border:1px solid #ccc;border-radius:18px;padding:14px 12px;background:#fff;color:#222;font:12px/1.45 system-ui;min-height:290px;display:flex;flex-direction:column;gap:9px}
+  .cap{font:11px system-ui;color:#888;text-align:center;margin-top:4px}
+  .chip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:22px;border-radius:5px;font-weight:700;font-size:10px}
+  .mtn{background:#FFCC00;color:#111}
+  .bar{height:4px;border-radius:2px;background:linear-gradient(90deg,#eee,#ccc,#eee)}
+  .steps{display:flex;gap:4px;font-size:10px;color:#999}.steps b{color:#0A6B3B}
+  .steps span{flex:1;border-top:3px solid #ddd;padding-top:3px}.steps span.on{border-color:#0A6B3B}
+  .muted{color:#777}.amt{font-size:18px;font-weight:700}
+  ol{margin:0;padding-left:18px}
+  .help{border:1px solid #e5e5e5;border-radius:9px;padding:8px;background:#fafafa}
+  .dial{display:inline-block;margin-top:4px;border:1px solid #0A6B3B;color:#0A6B3B;border-radius:7px;padding:4px 8px;font-weight:600}
+  .coll{border:1px solid #e5e5e5;border-radius:9px;padding:8px;display:flex;justify-content:space-between;color:#444}
+  h3.g{margin:22px 0 4px}
+</style>
+
+<h2>Waiting for approval on the phone</h2>
+<p class="subtitle">Two questions on this page. Pick one in each group. Chips stand in for the bundled logos.</p>
+
+<h3 class="g">1. What the waiting screen says</h3>
+<div class="options">
+  <div class="option" data-choice="wait-a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>One sentence + progress bar</h3>
+      <p>Names amount, school and operator in one line (pawaPay pattern).</p>
+      <div class="row"><div class="ph">
+        <div class="steps"><span class="on">1</span><span class="on"><b>2 Validation</b></span><span>3 Reçu</span></div>
+        <span class="chip mtn">MTN</span>
+        <div><b>Validez 20 100 FCFA</b> pour Collège La Réussite sur votre téléphone MTN.</div>
+        <div class="bar"></div>
+        <div class="muted">Gardez cette page ouverte.</div>
+      </div></div>
+    </div>
+  </div>
+  <div class="option" data-choice="wait-b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Amount on top + 3 numbered steps</h3>
+      <p>Tells the parent exactly what to do, in order.</p>
+      <div class="row"><div class="ph">
+        <div class="steps"><span class="on">1</span><span class="on"><b>2 Validation</b></span><span>3 Reçu</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><span class="chip mtn">MTN</span><div><div class="amt">20 100 FCFA</div><div class="muted">Collège La Réussite</div></div></div>
+        <ol><li>Regardez votre téléphone MTN</li><li>Entrez votre code secret</li><li>Gardez cette page ouverte</li></ol>
+        <div class="bar"></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<h3 class="g">2. "Pas reçu la demande ?" help</h3>
+<div class="options">
+  <div class="option" data-choice="help-a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Appears by itself after 15 s</h3>
+      <p>Hidden at first so the parent isn't distracted; shows up if the prompt is slow.</p>
+      <div class="row">
+        <div><div class="ph"><div class="muted">0–15 s</div><div class="bar"></div><div class="muted">(no help shown)</div></div><div class="cap">first 15 s</div></div>
+        <div><div class="ph"><div class="muted">after 15 s</div><div class="bar"></div>
+          <div class="help"><b>Pas reçu la demande ?</b><br>Composez le code MTN pour voir vos validations en attente.<br><span class="dial">📞 *126#</span></div>
+        </div><div class="cap">after 15 s</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="option" data-choice="help-b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Always there, folded</h3>
+      <p>A closed line from the start; the parent taps to open it.</p>
+      <div class="row">
+        <div><div class="ph"><div class="bar"></div><div class="coll"><span>Pas reçu la demande ?</span><span>▾</span></div></div><div class="cap">closed</div></div>
+        <div><div class="ph"><div class="bar"></div>
+          <div class="help"><b>Pas reçu la demande ? ▴</b><br>Composez le code MTN pour voir vos validations en attente.<br><span class="dial">📞 *126#</span></div>
+        </div><div class="cap">opened</div></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -15,7 +15,7 @@ export interface CollectRequest {
   returnUrl?: string
 }
 
-export type FailureReason = 'insufficient_funds' | 'declined' | 'expired' | 'unknown'
+export type FailureReason = 'insufficient_funds' | 'declined' | 'expired' | 'wrong_number' | 'unavailable' | 'unknown'
 
 export type Outcome =
   | { status: 'completed'; amount: number; currency: string }
