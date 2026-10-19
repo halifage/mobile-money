@@ -1,0 +1,84 @@
+<style>
+  .row{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px}
+  .ph{width:210px;border:1px solid #ccc;border-radius:18px;padding:14px 12px;background:#fff;color:#222;font:12px/1.45 system-ui;min-height:280px;display:flex;flex-direction:column;gap:9px}
+  .cap{font:11px system-ui;color:#888;text-align:center;margin-top:4px}
+  .chip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:22px;border-radius:5px;font-weight:700;font-size:10px}
+  .mtn{background:#FFCC00;color:#111}.om{background:#FF6600;color:#fff}
+  .steps{display:flex;gap:4px;font-size:10px;color:#999}.steps b{color:#0A6B3B}
+  .steps span{flex:1;border-top:3px solid #ddd;padding-top:3px}.steps span.on{border-color:#0A6B3B}
+  .muted{color:#777}.amt{font-size:18px;font-weight:700}
+  .btn{background:#0A6B3B;color:#fff;border-radius:9px;padding:9px;text-align:center;font-weight:600}
+  .ok{width:40px;height:40px;border-radius:50%;background:#e7f1ea;color:#0A6B3B;display:flex;align-items:center;justify-content:center;font-size:20px;margin:4px auto 0}
+  .clock{width:40px;height:40px;border-radius:50%;background:#f3f3f3;color:#555;display:flex;align-items:center;justify-content:center;font-size:20px;margin:4px auto 0}
+  .kv{display:flex;justify-content:space-between;border-bottom:1px dashed #eee;padding:2px 0}
+  .slot{border:1px dashed #aaa;border-radius:8px;padding:6px;text-align:center;color:#888}
+  .bar{height:4px;border-radius:2px;background:linear-gradient(90deg,#eee,#ccc,#eee)}
+  .desk{width:440px;height:230px;border:1px solid #ccc;border-radius:10px;background:#f6f6f6;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px}
+  .card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:10px;font:11px system-ui;color:#333}
+  h3.g{margin:22px 0 4px}
+</style>
+
+<h2>The other screens</h2>
+<p class="subtitle">Groups 1 and 2 are choices. Group 3 is my proposal: tell me what's wrong.</p>
+
+<h3 class="g">1. Pay-on-provider-page (redirect) — after tapping Payer</h3>
+<div class="options">
+  <div class="option" data-choice="redir-a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>Leave at once</h3><p>Brief "Redirection vers Orange Money…" then the browser goes there by itself.</p>
+      <div class="row"><div class="ph">
+        <div class="steps"><span class="on">1</span><span class="on"><b>2 Validation</b></span><span>3 Reçu</span></div>
+        <span class="chip om">OM</span><div><b>Redirection vers la page de paiement…</b></div><div class="bar"></div>
+      </div></div></div>
+  </div>
+  <div class="option" data-choice="redir-b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Explain first, parent taps to go</h3><p>Says what will happen and that they'll come back here.</p>
+      <div class="row"><div class="ph">
+        <div class="steps"><span class="on">1</span><span class="on"><b>2 Validation</b></span><span>3 Reçu</span></div>
+        <div style="display:flex;gap:8px;align-items:center"><span class="chip om">OM</span><div class="amt">20 100 FCFA</div></div>
+        <div>Vous allez payer sur la page sécurisée d'Orange Money, puis revenir ici.</div>
+        <div class="btn">Continuer vers Orange Money</div>
+      </div></div></div>
+  </div>
+</div>
+
+<h3 class="g">2. On tablet and desktop (768 / 1280 px)</h3>
+<div class="options">
+  <div class="option" data-choice="desk-a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>Same narrow card, centred</h3><p>Looks like the phone version; max ~420 px wide.</p>
+      <div class="row"><div class="desk"><div class="card" style="width:150px;height:190px">steps<br>amount<br>operator<br>number<br>Payer</div></div></div></div>
+  </div>
+  <div class="option" data-choice="desk-b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Two columns from 768 px</h3><p>Summary (amount, school) on the left, the step content on the right.</p>
+      <div class="row"><div class="desk"><div class="card" style="width:140px;height:190px">amount<br>school<br>details</div><div class="card" style="width:190px;height:190px">steps<br>operator<br>number<br>Payer</div></div></div></div>
+  </div>
+</div>
+
+<h3 class="g">3. Proposal: still checking, and success</h3>
+<div class="row">
+  <div><div class="ph">
+    <div class="steps"><span class="on">1</span><span class="on"><b>2 Vérification</b></span><span>3 Reçu</span></div>
+    <div class="clock">⏱</div>
+    <div style="text-align:center"><b>Nous vérifions votre paiement</b><br><span class="muted">Vous pouvez fermer cette page : le reçu apparaîtra ici.</span></div>
+  </div><div class="cap">pending confirmation (back from provider page, or approval window passed)</div></div>
+  <div><div class="ph">
+    <div class="steps"><span class="on">1</span><span class="on">2</span><span class="on"><b>3 Reçu</b></span></div>
+    <div class="ok">✓</div><div style="text-align:center"><b>Paiement reçu</b></div>
+    <div class="kv"><span class="muted">Montant</span><b>20 100 FCFA</b></div>
+    <div class="kv"><span class="muted">Pour</span><span>Collège La Réussite</span></div>
+    <div class="kv"><span class="muted">Opérateur</span><span><span class="chip mtn" style="width:28px;height:16px">MTN</span> •• 34 56</span></div>
+    <div class="kv"><span class="muted">Référence</span><span>MP2610…</span></div>
+    <div class="kv"><span class="muted">Date</span><span>18/10/2026 14:02</span></div>
+    <div class="slot">app's own buttons (e.g. "Voir le reçu")</div>
+  </div><div class="cap">succeeded</div></div>
+  <div><div class="ph">
+    <div class="steps"><span class="on">1</span><span class="on"><b style="color:#B3261E">2 Échec</b></span><span>3 Reçu</span></div>
+    <div class="clock">⏱</div>
+    <div style="text-align:center"><b>Aucune validation reçue à temps</b><br><span class="muted">La demande a expiré. Aucun montant n'a été débité.</span></div>
+    <div class="btn">Réessayer au 6 77 12 34 56</div>
+    <div style="color:#0A6B3B;text-align:center;text-decoration:underline">Changer de numéro ou d'opérateur</div>
+  </div><div class="cap">expired (same retry as failure)</div></div>
+</div>

@@ -1,0 +1,62 @@
+<style>
+  .row{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px}
+  .ph{width:210px;border:1px solid #ccc;border-radius:18px;padding:14px 12px;background:#fff;color:#222;font:12px/1.45 system-ui;min-height:290px;display:flex;flex-direction:column;gap:9px}
+  .cap{font:11px system-ui;color:#888;text-align:center;margin-top:4px}
+  .chip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:22px;border-radius:5px;font-weight:700;font-size:10px}
+  .mtn{background:#FFCC00;color:#111}
+  .steps{display:flex;gap:4px;font-size:10px;color:#999}.steps b{color:#B3261E}
+  .steps span{flex:1;border-top:3px solid #ddd;padding-top:3px}.steps span.on{border-color:#0A6B3B}.steps span.bad{border-color:#B3261E}
+  .muted{color:#777}
+  .x{width:40px;height:40px;border-radius:50%;background:#fdecea;color:#B3261E;display:flex;align-items:center;justify-content:center;font-size:20px;margin:4px auto 0}
+  .btn{background:#0A6B3B;color:#fff;border-radius:9px;padding:9px;text-align:center;font-weight:600}
+  .link{color:#0A6B3B;text-align:center;text-decoration:underline}
+  .tile{border:1px solid #ddd;border-radius:9px;padding:7px;display:flex;gap:6px;align-items:center}
+  .sel{border-color:#0A6B3B;box-shadow:0 0 0 2px #0A6B3B22}
+  .in{border:1px solid #ddd;border-radius:9px;padding:7px;display:flex;gap:6px}.pre{color:#666;border-right:1px solid #ddd;padding-right:6px}
+  .alert{background:#fdecea;color:#B3261E;border-radius:8px;padding:7px}
+</style>
+
+<h2>Payment failed: how does the parent retry?</h2>
+<p class="subtitle">Example reason: insufficient balance. Each reason gets its own message; amount, number and operator are always kept.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>"Réessayer" goes back to step 1, filled in</h3>
+      <p>Parent sees the form again with everything kept and the reason on top; checks it, taps Payer.</p>
+      <div class="row">
+        <div><div class="ph">
+          <div class="steps"><span class="on">1</span><span class="bad"><b>2 Échec</b></span><span>3 Reçu</span></div>
+          <div class="x">✕</div>
+          <div style="text-align:center"><b>Solde insuffisant</b><br><span class="muted">Rechargez votre compte MTN MoMo puis réessayez.</span></div>
+          <div class="btn">Réessayer</div>
+        </div><div class="cap">failed</div></div>
+        <div><div class="ph">
+          <div class="steps"><span class="on"><b style="color:#0A6B3B">1 Détails</b></span><span>2</span><span>3</span></div>
+          <div class="alert">Solde insuffisant au dernier essai</div>
+          <div class="tile sel"><span class="chip mtn">MTN</span>MTN MoMo</div>
+          <div class="in"><span class="pre">+237</span>6 77 12 34 56</div>
+          <div class="btn">Payer 20 100 FCFA</div>
+        </div><div class="cap">after tapping Réessayer</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>One tap to resend, or change details</h3>
+      <p>Main button resends straight to the same number; a link goes back to step 1 to change number or operator.</p>
+      <div class="row">
+        <div><div class="ph">
+          <div class="steps"><span class="on">1</span><span class="bad"><b>2 Échec</b></span><span>3 Reçu</span></div>
+          <div class="x">✕</div>
+          <div style="text-align:center"><b>Solde insuffisant</b><br><span class="muted">Rechargez votre compte MTN MoMo puis réessayez.</span></div>
+          <div class="btn">Réessayer au 6 77 12 34 56</div>
+          <div class="link">Changer de numéro ou d'opérateur</div>
+        </div><div class="cap">failed</div></div>
+      </div>
+    </div>
+  </div>
+</div>
