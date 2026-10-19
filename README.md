@@ -218,6 +218,13 @@ npm run smoke     # pack, install, import
 npm run demo      # demo/index.html: every checkout state, static
 ```
 
+Release: GitHub → Actions → **release** → Run workflow, pick the bump (`patch`/`minor`/`major`) and the branch. It
+runs the checks, commits `chore: release X.Y.Z`, tags `vX.Y.Z`, pushes, publishes to npm with provenance and creates a
+GitHub Release with generated notes. Picking `main` first fast-forwards `main` to `dev`; both end on the release
+commit. If `dev` or `main` moves during the run, the push is rejected and nothing is published. npm auth is trusted
+publishing, no token: once, on npmjs.com → package → Settings → Trusted publisher, add GitHub Actions with owner
+`halifage`, repository `mobile-money`, workflow `release.yml`.
+
 Live Orange test (moves real money): copy `.env.example` to `.env.live` (all `.env*` files except the example are
 gitignored), fill in the Orange credentials, then:
 
