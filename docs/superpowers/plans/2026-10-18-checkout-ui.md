@@ -64,13 +64,13 @@
   - `guessOperator(raw: string): Operator | null`: MTN `67x, 650–654, 680–684`; Orange `69x, 655–659, 685–689`; else null.
   - `displayPhone(local: string): string`: `'677123456'` → `'6 77 12 34 56'`.
 
-- [ ] **Step 1:** `npm i -D react@19 react-dom@19 @types/react@19 @types/react-dom@19 @testing-library/react jsdom` (exact versions pinned like the existing devDeps); add `peerDependencies` `{ "react": ">=19", "react-dom": ">=19" }` + `peerDependenciesMeta` both `{ "optional": true }`.
-- [ ] **Step 2: Failing tests** `test/checkout/phone.test.ts`:
+- [x] **Step 1:** `npm i -D react@19 react-dom@19 @types/react@19 @types/react-dom@19 @testing-library/react jsdom` (exact versions pinned like the existing devDeps); add `peerDependencies` `{ "react": ">=19", "react-dom": ">=19" }` + `peerDependenciesMeta` both `{ "optional": true }`.
+- [x] **Step 2: Failing tests** `test/checkout/phone.test.ts`:
   - `localPhone` of `'+237 6 77 12 34 56'`, `'00237677123456'`, `'0677123456'`, `'677-12-34-56'` → `'677123456'`; of `'577123456'`, `'67712345'`, `''` → `null`.
   - `guessOperator`: `'677…'`→`'mtn'`, `'650…'`→`'mtn'`, `'684…'`→`'mtn'`, `'699…'`→`'orange'`, `'655…'`→`'orange'`, `'689…'`→`'orange'`, `'662123456'`→`null`, invalid → `null`.
   - `displayPhone('677123456')` → `'6 77 12 34 56'`.
-- [ ] **Step 3:** Run → FAIL. Implement. Run → PASS. Four checks.
-- [ ] **Step 4:** Commit `feat(checkout): phone helpers and react tooling`.
+- [x] **Step 3:** Run → FAIL. Implement. Run → PASS. Four checks.
+- [x] **Step 4:** Commit `feat(checkout): phone helpers and react tooling`.
 
 ### Task 3: Messages, operators, icons
 

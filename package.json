@@ -28,9 +28,27 @@
     "smoke": "npm run build && node test/package-smoke.mjs",
     "prepublishOnly": "npm run build"
   },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@testing-library/react": "16.3.3",
     "@types/node": "25.6.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "jsdom": "29.1.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
   }
