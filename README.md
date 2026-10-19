@@ -115,6 +115,78 @@ status: call `status(ref)` or `payoutStatus(ref)`. Without callbacks configured,
 Your app picks the provider per operator. To add another aggregator, implement
 `MobileMoneyProvider` and run `describeProviderContract` from `test/contract.ts` against it.
 
+## Checkout UI
+
+A React checkout for the payer, at `@halifage/mobile-money/checkout`. It renders from a provider-neutral status your
+app owns; it never calls a provider, polls or stores anything. French by default, English included, no Tailwind needed.
+
+```bash
+npm install @halifage/mobile-money react react-dom   # react >= 19, optional peer: only the checkout needs it
+```
+
+```tsx
+import { Checkout, type CheckoutStatus } from '@halifage/mobile-money/checkout'
+import '@halifage/mobile-money/checkout.css'
+
+<Checkout
+  amount={20100}                        // XAF, whole units
+  payee="Collège La Réussite"
+  status={status}                       // CheckoutStatus, from your app
+  onPay={({ operator, phone }) => start(operator, phone)} // phone: '237' + 9 digits
+/>
+```
+
+The root import `@halifage/mobile-money` stays React-free.
+
+| Prop | |
+|---|---|
+| `amount`, `payee` | Shown on every step. |
+| `status` | `CheckoutStatus` below. |
+| `onPay({ operator, phone })` | Called by Payer and by Réessayer, once per tap until `status` changes. |
+| `defaultOperator`, `defaultPhone` | Prefill, e.g. after a reload in a failed state. Any common phone format. |
+| `summary` | Extra lines under the amount. |
+| `actions` | Shown on success, e.g. a receipt link. |
+| `locale` | `'fr'` (default) or `'en'`. |
+| `messages` | Per-string overrides, e.g. `{ payButton: 'Régler {amount}' }`. |
+
+| `status` | Shows |
+|---|---|
+| `{ status: 'idle' }` | Amount, operator tiles (follow the number's prefix), number field, Payer |
+| `{ status: 'initiated' }` | Same form, disabled, spinner |
+| `{ status: 'awaiting_customer', nextAction: { kind: 'approve_on_phone', operator } }` | 3 steps to approve on the phone, folded "Pas reçu la demande ?" help (MTN: dial `*126#`) |
+| `{ status: 'awaiting_customer', nextAction: { kind: 'redirect', url } }` | "Redirection…", then `window.location.assign(url)` once |
+| `{ status: 'pending_confirmation' }` | "Nous vérifions votre paiement" |
+| `{ status: 'succeeded', reference, paidAt }` | Receipt rows, then `actions` |
+| `{ status: 'failed', reason }` / `{ status: 'expired' }` | Reason message, one-tap retry to the same number, "Changer de numéro ou d'opérateur" |
+
+The component keeps the operator and number itself; "Changer…" shows the form again until the next `onPay`. An error
+before anything reached the operator is `failed` with reason `unknown`. Mapping a `collect()` result to `NextAction`:
+
+```ts
+const { ref, redirectUrl } = await provider.collect(request)
+const nextAction: NextAction = redirectUrl
+  ? { kind: 'redirect', url: redirectUrl }
+  : { kind: 'approve_on_phone', operator: request.operator }
+```
+
+Theming: override these on `.mm-checkout` (classes are prefixed `mm-`). From 600 px of its own width the component
+splits into two columns, summary left.
+
+| Variable | Default |
+|---|---|
+| `--mm-accent` | `#0a6b3b` (active step, selected tile, main button) |
+| `--mm-danger` | `#b3261e` |
+| `--mm-fg` / `--mm-muted` | `#222` / `#6b6b6b` |
+| `--mm-bg` / `--mm-border` | `#fff` / `#ddd` |
+| `--mm-radius` | `12px` |
+| `--mm-font` | `inherit` |
+
+![Checkout at 375 px](docs/checkout/checkout-375.png)
+
+Logos: [MTN 2022 logo](https://commons.wikimedia.org/wiki/File:MTN_2022_logo.svg) and the
+[Orange Money arrow mark](https://commons.wikimedia.org/wiki/File:Logo_Orange_Money.svg), both from Wikimedia Commons.
+MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your merchant-kit files if you have them.
+
 ## Observed provider behaviour
 
 - Orange (live, 2026-10-14): token, `mp/init` and TLS verification work as documented. `mp/pay` rejects an
@@ -143,6 +215,7 @@ npm run type-check
 npm run lint      # biome
 npm run build     # dist/
 npm run smoke     # pack, install, import
+npm run demo      # demo/index.html: every checkout state, static
 ```
 
 Live Orange test (moves real money): copy `.env.example` to `.env.live` (all `.env*` files except the example are
