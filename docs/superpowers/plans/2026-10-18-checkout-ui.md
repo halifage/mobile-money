@@ -116,7 +116,7 @@ Behaviour to implement (spec §5.3 is the state table):
 - Help: `<details class="mm-help"><summary>` title + chevron; body: menu code as `<a href={'tel:' + encodeURIComponent(menuCode)}>` with phone icon, or the "open the app" line when no code.
 - Layout: root `div.mm-checkout` (`container-type: inline-size`), inner `.mm-layout` grid: one column; `@container (min-width: 600px)` → summary column left (amount, payee, `summary`), step column right. Status region `aria-live="polite"`. `prefers-reduced-motion` stops the progress-bar animation. `overflow-wrap: anywhere` on payee.
 
-- [ ] **Step 1: Failing tests** (render with `amount={20100} payee="Collège La Réussite"`, `onPay = vi.fn()`):
+- [x] **Step 1: Failing tests** (render with `amount={20100} payee="Collège La Réussite"`, `onPay = vi.fn()`):
   - `idle`: shows `'20 100 FCFA'`, payee, both tile names, `+237`, the `summary` node; Payer disabled; typing `677123456` enables it; click → `onPay` called once with `{ operator: 'mtn', phone: '237677123456' }`.
   - Double click Payer → `onPay` called once (Review Focus 2).
   - Typing `699123456` selects Orange tile (`aria-checked="true"`); tapping MTN then typing more digits of the same prefix keeps MTN; typing `662123456` keeps the current tile (Review Focus 3).
@@ -129,9 +129,9 @@ Behaviour to implement (spec §5.3 is the state table):
   - failed + `defaultPhone`: button `'Réessayer au 6 77 12 34 56'` → `onPay({ operator: 'mtn', phone: '237677123456' })`; without a known phone the button reads `'Réessayer'`.
   - "Changer de numéro ou d'opérateur" → form shown with values kept, step bar back on step 1.
   - `locale="en"` idle → `'Pay 20,100 FCFA'`; `messages={{ payButton: 'Régler {amount}' }}` → `'Régler 20 100 FCFA'`.
-- [ ] **Step 2:** Run → FAIL. Implement `Checkout.tsx` + `index.ts`.
-- [ ] **Step 3:** Write `checkout.css` per spec §5.6 (card, step bar, tiles, `+237` prefix field, numbered list, indeterminate bar, icon badges, buttons, link, two-column container query). Match the approved mockups (copies in `docs/superpowers/mockups/checkout/`; spec §5.3/§5.6 are normative).
-- [ ] **Step 4:** Run → PASS. Four checks. Commit `feat(checkout): checkout component`.
+- [x] **Step 2:** Run → FAIL. Implement `Checkout.tsx` + `index.ts`.
+- [x] **Step 3:** Write `checkout.css` per spec §5.6 (card, step bar, tiles, `+237` prefix field, numbered list, indeterminate bar, icon badges, buttons, link, two-column container query). Match the approved mockups (copies in `docs/superpowers/mockups/checkout/`; spec §5.3/§5.6 are normative).
+- [x] **Step 4:** Run → PASS. Four checks. Commit `feat(checkout): checkout component`.
 
 ### Task 5: Packaging, demo, screenshots, README
 
@@ -159,6 +159,12 @@ Behaviour to implement (spec §5.3 is the state table):
 - Ruling (Task 3): `formatAmount` keeps Intl's narrow no-break space in fr and joins ` FCFA` with a no-break space, so an amount never wraps — tests compare with `\u202f`/`\u00a0` — cost if wrong: hosts comparing plain-space strings.
 - Ruling (Task 3): copy the spec gives only in FR — EN "Open the {op} app to see your pending approvals" (help without menu code) and "Try again" (retry without phone) are my translations — cost if wrong: two strings to edit.
 - Owner decision (Task 3 stop, 2026-10-18): corporate logos rejected. MTN = 2022 MTN brand (`File:MTN_2022_logo.svg`, black on `#FFCC00`); Orange = Orange Money arrow mark only (`File:Logo_Orange_Money.svg`, cropped to the arrows). No free MTN MoMo product logo exists; swap in merchant-kit files if obtained.
+- Ruling (Task 4): operator tiles are native `<input type="radio">` in a `<fieldset>` (biome a11y rule; arrow keys for free), not `role="radio"` buttons; tests read `.checked` instead of `aria-checked` — cost if wrong: none visible.
+- Ruling (Task 4): initial tile = `defaultOperator` ?? guess from `defaultPhone` ?? `mtn` (mockup shows MTN selected) — cost if wrong: a parent with a non-MTN/Orange prefix pays on MTN unless they tap Orange.
+- Ruling (Task 4): "Réessayer" with no known phone opens the form instead of calling `onPay` (nothing to send) — cost if wrong: one extra tap.
+- Ruling (Task 4): visible labels "Opérateur" / "Numéro {op}" (spec §5.5 copy + §5.6 real labels; mockups omit them) — cost if wrong: two small lines to hide.
+- Ruling (Task 4): on narrow screens the summary (amount, payee) shows only in the form and approve-on-phone views, as in the mockups; from 600 px it is always the left column — cost if wrong: one CSS rule.
+- Ruling (Task 4): done steps show only their number, the current one its label (mockup B); invalid-number line shows after the field loses focus; `--mm-muted` is `#6b6b6b` (mockup `#777` fails AA contrast on white) — cost if wrong: CSS tweaks.
 
 ## Stop points
 
