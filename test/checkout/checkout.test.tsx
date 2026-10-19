@@ -182,6 +182,14 @@ describe('failed', () => {
   })
 })
 
+it('a status after failure (e.g. a late success) replaces the "Changer" form', () => {
+  const { rerender } = setup({ status: { status: 'failed', reason: 'unknown' }, defaultPhone: '677123456' })
+  fireEvent.click(screen.getByRole('button', { name: "Changer de numéro ou d'opérateur" }))
+  rerender({ status: { status: 'succeeded', reference: 'MP1', paidAt: new Date() } })
+  expect(screen.getByText('Paiement reçu')).toBeTruthy()
+  expect(screen.queryByRole('textbox')).toBeNull()
+})
+
 it('english and overrides', () => {
   setup({ locale: 'en', defaultPhone: '677123456' })
   expect(text(payButton())).toBe('Pay 20,100 FCFA')

@@ -91,10 +91,11 @@ export function Checkout({
     onPay({ operator, phone: `237${local}` })
   }
 
-  const showForm = editing || status.status === 'idle' || status.status === 'initiated'
   const busy = status.status === 'initiated'
   const failedReason: FailureReason | null =
     status.status === 'expired' ? 'expired' : status.status === 'failed' ? status.reason : null
+  // "Changer…" only overrides a failed screen: any other status from the app wins.
+  const showForm = (editing && failedReason !== null) || status.status === 'idle' || status.status === 'initiated'
 
   let step: 1 | 2 | 3 = 2
   let stepLabel = m.stepApproval

@@ -168,6 +168,8 @@ Behaviour to implement (spec §5.3 is the state table):
 - Ruling (Task 5): screenshots taken with headless Chrome through a fixed-width iframe (headless Chrome enforces a minimum window width, so a bare 375 px window renders wider) — cost if wrong: none, checked at each width.
 - Ruling (Task 5): package/demo/screenshots committed before the README (stop point between them) — cost if wrong: two commits instead of one.
 - Task 5 Step 4 checks: 375 px `scrollWidth` 375 (no horizontal scroll); `.mm-layout` two columns at 768 (265/397 px) and 1280 (470/704 px); 70-char payee wraps.
+- Final review: self-review (owner rule: no subagent without approval).
+- Final: fixed "Changer…" form hid a later status (late success showed the form, double-pay risk) — editing now only overrides failed/expired — test `a status after failure (e.g. a late success) replaces the "Changer" form` RED→GREEN, suite 182/182.
 
 ## Stop points
 
