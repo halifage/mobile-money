@@ -87,6 +87,7 @@ describe('mtnDirect', () => {
   it.each([
     ['APPROVAL_REJECTED', 'declined'],
     ['EXPIRED', 'expired'],
+    ['SERVICE_UNAVAILABLE', 'unavailable'],
     ['INTERNAL_PROCESSING_ERROR', 'unknown'],
   ])('maps FAILED reason %s to %s', async (reason, expected) => {
     mockFetch({ '/token': TOKEN, 'requesttopay/': body('FAILED', { reason }) })
@@ -100,6 +101,11 @@ describe('mtnDirect', () => {
   it('reads a FAILED reason given as an object', async () => {
     mockFetch({ '/token': TOKEN, 'requesttopay/': body('FAILED', { reason: { code: 'NOT_ENOUGH_FUNDS' } }) })
     await expect(mtnDirect(config).status(request.id)).resolves.toMatchObject({ reason: 'insufficient_funds' })
+  })
+
+  it('maps PAYER_NOT_FOUND to wrong_number', async () => {
+    mockFetch({ '/token': TOKEN, 'requesttopay/': body('FAILED', { reason: { code: 'PAYER_NOT_FOUND' } }) })
+    await expect(mtnDirect(config).status(request.id)).resolves.toMatchObject({ reason: 'wrong_number' })
   })
 
   it('404 → failed NOT_FOUND', async () => {

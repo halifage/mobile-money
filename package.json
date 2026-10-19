@@ -1,7 +1,7 @@
 {
   "name": "@halifage/mobile-money",
-  "version": "0.2.0",
-  "description": "Mobile money collections for Cameroon: Orange and MTN direct, extensible to aggregators",
+  "version": "0.4.0",
+  "description": "Mobile money collections and payouts for Cameroon: Orange and MTN direct, pawaPay",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -15,22 +15,46 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./checkout": {
+      "types": "./dist/checkout/index.d.ts",
+      "import": "./dist/checkout/index.js"
+    },
+    "./checkout.css": "./dist/checkout.css"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && cp src/checkout/checkout.css dist/checkout.css",
     "test": "vitest run",
     "type-check": "tsc",
     "lint": "biome check .",
     "smoke": "npm run build && node test/package-smoke.mjs",
+    "demo": "npm run build && node scripts/demo.mjs",
     "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@testing-library/react": "16.3.3",
     "@types/node": "25.6.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "jsdom": "29.1.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
   }

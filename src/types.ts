@@ -15,18 +15,35 @@ export interface CollectRequest {
   returnUrl?: string
 }
 
-export type FailureReason = 'insufficient_funds' | 'declined' | 'expired' | 'unknown'
+export type FailureReason = 'insufficient_funds' | 'declined' | 'expired' | 'wrong_number' | 'unavailable' | 'unknown'
 
 export type Outcome =
   | { status: 'completed'; amount: number; currency: string }
   | { status: 'failed'; reason: FailureReason; code?: string }
-  | { status: 'pending' }
+  /** code: provider detail, e.g. pawaPay NOT_FOUND (the payer has not paid yet) */
+  | { status: 'pending'; code?: string }
 
 export interface MobileMoneyProvider {
   readonly operators: readonly Operator[]
   /** redirectUrl: when set, send the payer there to complete the payment. */
   collect(request: CollectRequest): Promise<{ ref: string; redirectUrl?: string }>
   status(ref: string): Promise<Outcome>
+}
+
+export interface PayoutRequest {
+  /** App's payout id, used as the idempotency key. */
+  id: string
+  operator: Operator
+  /** Whole units, positive integer; the recipient gets exactly this. */
+  amount: number
+  phone: string
+  /** Shown to the recipient when the provider supports it. */
+  message?: string
+}
+
+export interface MobileMoneyPayouts {
+  payout(request: PayoutRequest): Promise<{ ref: string }>
+  payoutStatus(ref: string): Promise<Outcome>
 }
 
 /**
