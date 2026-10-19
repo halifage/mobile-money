@@ -158,6 +158,7 @@ Behaviour to implement (spec §5.3 is the state table):
 - Ruling (Task 1): biome lint failed on the committed mockup HTML (24 a11y errors) — excluded `docs/superpowers/mockups` in `biome.json` — cost if wrong: mockups go unlinted (they are reference only).
 - Ruling (Task 3): `formatAmount` keeps Intl's narrow no-break space in fr and joins ` FCFA` with a no-break space, so an amount never wraps — tests compare with `\u202f`/`\u00a0` — cost if wrong: hosts comparing plain-space strings.
 - Ruling (Task 3): copy the spec gives only in FR — EN "Open the {op} app to see your pending approvals" (help without menu code) and "Try again" (retry without phone) are my translations — cost if wrong: two strings to edit.
+- Owner decision (Task 3 stop, 2026-10-18): corporate logos rejected. MTN = 2022 MTN brand (`File:MTN_2022_logo.svg`, black on `#FFCC00`); Orange = Orange Money arrow mark only (`File:Logo_Orange_Money.svg`, cropped to the arrows). No free MTN MoMo product logo exists; swap in merchant-kit files if obtained.
 
 ## Stop points
 
