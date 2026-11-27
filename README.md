@@ -97,7 +97,8 @@ export async function POST(request: Request) {
 - `camPay`: `returnUrl` picks the mode. Without it, `collect` sends a USSD push to the payer's phone (`/collect/`);
   with it, `collect` returns a hosted payment link (`redirectUrl`, mobile money only) that sends the payer back to
   `returnUrl` on success or failure. `id` must be a UUID (sent as `external_reference`); the `ref` is CamPay's
-  `reference`. A lost USSD push reply is `uncertain` without `ref`: re-send `collect` with the same `id` to get it.
+  `reference`. A lost USSD push reply is `uncertain` without `ref`: re-send `collect` with the same `id` to get it
+  once it settles (before that CamPay answers `DUPLICATE_ATTEMPT`, also `uncertain` without `ref`).
   A lost payment link reply is `rejected`. A link stays `pending` with code `NOT_FOUND` until the payer acts.
   `callbackUrl` is ignored and `signCallbackUrl` does not apply: CamPay calls the one URL set per app in its
   dashboard; verify it with `parseCamPayCallback`.
@@ -229,6 +230,18 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   minutes when the payer did not approve the Orange prompt; it stays `pending`, so the caller decides when to give up.
   An Orange payout on an account not enabled for it answers HTTP 403 with `status: "REJECTED"` and `failureCode`
   `PAYOUTS_NOT_ALLOWED` (SDK: `rejected`, nothing sent). Orange payouts need enabling per account in pawaPay.
+
+- CamPay demo (2026-11-27), all as mocked in the unit tests: `/collect/` answers 200 with `reference`, `ussd_code`,
+  `operator`; test numbers settle `PENDING` → `SUCCESSFUL`/`FAILED` in about 25 s, `FAILED` with `reason` `"TESTING"`
+  (`"None"` otherwise). Re-sending an `external_reference` while it is pending answers HTTP 429
+  `error_code: "DUPLICATE_ATTEMPT"`; after it settles, 200 with the first `reference` and `status`. Errors are
+  `{ message, error_code }` (`ER101` bad phone, `ER201` decimal amount, HTTP 400). Unknown or not-yet-paid link
+  references answer 404 `{"message":"Not found"}`. The payment link page ignores `from`: the payer types the number.
+  **Every demo transaction reports `amount: "0.00"`** (also `app_amount`, `/history/` and the dashboard), so
+  `status()` turns a demo `SUCCESSFUL` into `unavailable` `BAD_AMOUNT`; production amounts not yet observed.
+  Status bodies carry a `signature` JWT (`{alg: HS256, app, typ}`, payload `iat/nbf/exp/source`) that
+  `parseCamPayCallback` verifies with the webhook key. Withdrawals on an app without them enabled answer 401
+  `API WITHDRAWALS UNAUTHORIZED` (`rejected`). Callbacks not exercised (dashboard URL not set).
 
 - MTN MoMo sandbox (2026-11-03): token, `requesttopay` (202, empty body) and status polling work as documented,
   currency `EUR`. Status spellings: `CREATED` (pending), `SUCCESSFUL` (with `financialTransactionId`) and `FAILED`

@@ -26,7 +26,7 @@ const tx = (status: string, extra: Record<string, unknown> = {}): Reply => ({
 })
 const statuses = {
   completed: tx('SUCCESSFUL', { amount: 10, endpoint: 'collect' }),
-  failed: tx('FAILED', { reason: 'Transaction failed' }),
+  failed: tx('FAILED', { reason: 'TESTING' }),
   failedReason: 'unknown' as const,
   pending: tx('PENDING'),
   unknown: tx('SOMETHING_NEW'),
@@ -115,6 +115,28 @@ describe('camPay collections', () => {
     expect(calls).toHaveLength(0)
   })
 
+  // body shapes observed in the CamPay demo, 2026-11-27
+  it('4xx → rejected with error_code', async () => {
+    mockFetch({ '/collect/': { status: 400, body: { message: 'Invalid phone number', error_code: 'ER101' } } })
+    expect(await caught(camPay(config).collect(push))).toMatchObject({ kind: 'rejected', code: 'ER101' })
+  })
+
+  it('same id while the first is processing (429 DUPLICATE_ATTEMPT) → uncertain without ref', async () => {
+    const duplicate: Reply = {
+      status: 429,
+      body: {
+        message: 'A request with this external reference is already being processed',
+        error_code: 'DUPLICATE_ATTEMPT',
+      },
+    }
+    mockFetch({ '/collect/': duplicate })
+    expect(await caught(camPay(config).collect(push))).toMatchObject({
+      kind: 'uncertain',
+      code: 'DUPLICATE_ATTEMPT',
+      ref: undefined,
+    })
+  })
+
   it('maps a reference CamPay has no result for to pending NOT_FOUND', async () => {
     mockFetch({ '/transaction/': { status: 404, body: { message: 'Not found.' } } })
     await expect(camPay(config).status(REF)).resolves.toEqual({ status: 'pending', code: 'NOT_FOUND' })
@@ -125,7 +147,7 @@ describe('camPay collections', () => {
     await expect(camPay(config).status(REF)).resolves.toEqual({
       status: 'failed',
       reason: 'unknown',
-      code: 'Transaction failed',
+      code: 'TESTING',
     })
   })
 
@@ -165,7 +187,7 @@ describe('camPay payouts', () => {
   })
 
   it('ER301 / 4xx → rejected with the provider code', async () => {
-    mockFetch({ '/withdraw/': { status: 400, body: { message: 'Insufficient balance', code: 'ER301' } } })
+    mockFetch({ '/withdraw/': { status: 400, body: { message: 'Insufficient balance', error_code: 'ER301' } } })
     expect(await caught(camPay(config).payout(payout))).toMatchObject({ kind: 'rejected', code: 'ER301' })
   })
 

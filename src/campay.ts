@@ -16,6 +16,7 @@ const CURRENCY = 'XAF'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const invalid = () => new MobileMoneyError('rejected', 'invalid_input')
+const errorCode = (result: HttpResult) => str(record(result.body).error_code) || providerCode(result)
 
 /** Validates the request; returns the payer number as `237` + 9 digits starting with 6. */
 function checked(request: { id: string; operator: string; amount: number; phone: string }): string {
@@ -41,7 +42,10 @@ export function camPay(config: CamPayConfig): MobileMoneyProvider & MobileMoneyP
       throw new MobileMoneyError('uncertain', 'NETWORK')
     }
     if (result.status >= 500) throw new MobileMoneyError('uncertain', `HTTP_${result.status}`)
-    if (!ok(result)) throw new MobileMoneyError('rejected', providerCode(result))
+    const code = errorCode(result)
+    // the same id is still in flight: once it settles, re-sending returns its reference
+    if (code === 'DUPLICATE_ATTEMPT') throw new MobileMoneyError('uncertain', code)
+    if (!ok(result)) throw new MobileMoneyError('rejected', code)
     const ref = str(record(result.body).reference)
     if (!ref) throw new MobileMoneyError('uncertain', 'BAD_RESPONSE')
     return { ref }
@@ -82,7 +86,7 @@ export function camPay(config: CamPayConfig): MobileMoneyProvider & MobileMoneyP
         description: request.description,
         external_reference: request.id,
       }
-      // ponytail: re-calling with the same id is CamPay's recovery path (idempotent on external_reference)
+      // re-sending the same id returns the first reference once it settles (DUPLICATE_ATTEMPT before that)
       if (!request.returnUrl) return start('/collect/', payment)
       let result: HttpResult
       try {
@@ -99,7 +103,7 @@ export function camPay(config: CamPayConfig): MobileMoneyProvider & MobileMoneyP
       const body = record(result.body)
       const ref = str(body.reference)
       const redirectUrl = str(body.link)
-      if (!ok(result) || !ref || !redirectUrl) throw new MobileMoneyError('rejected', providerCode(result))
+      if (!ok(result) || !ref || !redirectUrl) throw new MobileMoneyError('rejected', errorCode(result))
       return { ref, redirectUrl }
     },
 
