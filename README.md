@@ -244,7 +244,8 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   `status()` turns a demo `SUCCESSFUL` into `unavailable` `BAD_AMOUNT`; production amounts not yet observed.
   Status bodies carry a `signature` JWT (`{alg: HS256, app, typ}`, payload `iat/nbf/exp/source`) that
   `parseCamPayCallback` verifies with the webhook key. Withdrawals on an app without them enabled answer 401
-  `API WITHDRAWALS UNAUTHORIZED` (`rejected`). Callbacks not exercised (dashboard URL not set).
+  `API WITHDRAWALS UNAUTHORIZED` (`rejected`). The callback came as a GET to the dashboard URL as is (no path
+  added), within a second of `SUCCESSFUL`, with the status body as query fields; `parseCamPayCallback` verified it.
 
 - pawaPay sandbox, direct deposit (2026-11-27): `POST /v2/deposits` answers HTTP 200 (not 201) with
   `status: "ACCEPTED"` and `nextStep: "FINAL_STATUS"` for both `MTN_MOMO_CMR` and `ORANGE_CMR`, so neither needs
