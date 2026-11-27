@@ -215,9 +215,12 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   minutes when the payer did not approve the Orange prompt; it stays `pending`, so the caller decides when to give up.
   An Orange payout on an account not enabled for it answers HTTP 403 with `status: "REJECTED"` and `failureCode`
   `PAYOUTS_NOT_ALLOWED` (SDK: `rejected`, nothing sent). Orange payouts need enabling per account in pawaPay.
-  A direct deposit sent with the production token to the sandbox answers HTTP 401 with `status: "REJECTED"` and
-  `failureCode` `AUTHENTICATION_ERROR` (SDK: `rejected`). pawaPay's providers page lists `MTN_MOMO_CMR` and
-  `ORANGE_CMR` as provider-authorised, so direct deposits need no `preAuthorisationCode`.
+
+- pawaPay sandbox, direct deposit (2026-11-27): `POST /v2/deposits` answers HTTP 200 (not 201) with
+  `status: "ACCEPTED"` and `nextStep: "FINAL_STATUS"` for both `MTN_MOMO_CMR` and `ORANGE_CMR`, so neither needs
+  `preAuthorisationCode`. The test numbers went `COMPLETED` within 5 s, `amount: "100.00"`, with
+  `providerTransactionId` and the `customerMessage` echoed in `data`. A token for the wrong environment answers
+  HTTP 401 with `status: "REJECTED"` and `failureCode` `AUTHENTICATION_ERROR` (SDK: `rejected`).
 
 - MTN MoMo sandbox (2026-11-03): token, `requesttopay` (202, empty body) and status polling work as documented,
   currency `EUR`. Status spellings: `CREATED` (pending), `SUCCESSFUL` (with `financialTransactionId`) and `FAILED`
