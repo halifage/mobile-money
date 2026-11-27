@@ -1,6 +1,6 @@
 # @halifage/mobile-money
 
-Mobile money collections and payouts for Cameroon. Talks to Orange Money and MTN MoMo directly, or through pawaPay,
+Mobile money collections and payouts for Cameroon. Talks to Orange Money and MTN MoMo directly, or through pawaPay or CamPay,
 and returns normalised outcomes. It stores nothing and settles nothing: your app persists the `ref`, confirms every payment with
 `status()`, and settles.
 
@@ -78,6 +78,7 @@ export async function POST(request: Request) {
 | `orangeWebPay` | `orange` | `clientId`, `clientSecret`, `merchantKey`, `environment` (`dev` sandbox in test currency `OUV`, or `cm`), `baseUrl?` (default `https://api.orange.com`) |
 | `mtnDirect` | `mtn` | `subscriptionKey`, `apiUser`, `apiKey`, `environment` (`sandbox` or `mtncameroon`), `baseUrl?` |
 | `pawaPay` | `mtn`, `orange` | `token` (API token from the pawaPay dashboard), `environment` (`sandbox` or `production`), `baseUrl?` |
+| `camPay` | `mtn`, `orange` | `token` (permanent app access token from the CamPay dashboard), `environment` (`demo` or `production`), `baseUrl?` |
 
 - Orange wants a 9-digit local payer number; the SDK strips `+237`.
 - `orangeWebPay` is redirect-based: pass `returnUrl`, then send the payer to the `redirectUrl` that `collect` returns,
@@ -96,6 +97,15 @@ export async function POST(request: Request) {
   until the payer presses Pay; the page expires after 15 minutes without a callback, so the caller decides when a
   long `NOT_FOUND` is dead. `callbackUrl` is ignored: pawaPay posts callbacks to the URLs set in its dashboard.
 
+- `camPay`: `returnUrl` picks the mode. Without it, `collect` sends a USSD push to the payer's phone (`/collect/`);
+  with it, `collect` returns a hosted payment link (`redirectUrl`, mobile money only) that sends the payer back to
+  `returnUrl` on success or failure. `id` must be a UUID (sent as `external_reference`); the `ref` is CamPay's
+  `reference`. A lost USSD push reply is `uncertain` without `ref`: re-send `collect` with the same `id` to get it
+  once it settles (before that CamPay answers `DUPLICATE_ATTEMPT`, also `uncertain` without `ref`).
+  A lost payment link reply is `rejected`. A link stays `pending` with code `NOT_FOUND` until the payer acts.
+  `callbackUrl` is ignored and `signCallbackUrl` does not apply: CamPay calls the one URL set per app in its
+  dashboard; verify it with `parseCamPayCallback`.
+
 ### Payouts
 
 `pawaPay()` also implements `MobileMoneyPayouts`:
@@ -110,10 +120,18 @@ recipient, else omitted. Re-sending the same `id` is safe (pawaPay answers `DUPL
 nothing was sent; `uncertain` (network error, 5xx, `UNKNOWN_ERROR`) carries `ref`: poll `payoutStatus`. A payout
 pawaPay never received is `failed` with code `NOT_FOUND`.
 
+`camPay()` implements it too: `payout` sends a withdrawal (enable withdrawals in the app settings), `message` is its
+description. `rejected` (4xx, `ER301` insufficient balance) means nothing was sent; `uncertain` (network error, 5xx)
+has no `ref`: re-send with the same `id`.
+
 ### Callbacks
 
 `parsePawaPayCallback(rawBody)` returns `{ kind: 'deposit' | 'payout' | 'refund', ref }` or `null`. It never returns a
 status: call `status(ref)` or `payoutStatus(ref)`. Without callbacks configured, polling alone works.
+
+`parseCamPayCallback(fields, webhookKey)` takes the callback's fields (GET query: `Object.fromEntries(url.searchParams)`,
+or the POST JSON body), checks `signature` (HS256 JWT signed with the app's webhook key) and returns
+`{ kind: 'collect' | 'payout', ref }` or `null`. CamPay sends each callback once, no retry: keep polling.
 
 Your app picks the provider per operator. To add another aggregator, implement
 `MobileMoneyProvider` and run `describeProviderContract` from `test/contract.ts` against it.
@@ -216,6 +234,22 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   An Orange payout on an account not enabled for it answers HTTP 403 with `status: "REJECTED"` and `failureCode`
   `PAYOUTS_NOT_ALLOWED` (SDK: `rejected`, nothing sent). Orange payouts need enabling per account in pawaPay.
 
+- CamPay demo (2026-11-27), all as mocked in the unit tests: `/collect/` answers 200 with `reference`, `ussd_code`,
+  `operator`; test numbers settle `PENDING` → `SUCCESSFUL`/`FAILED` in about 25 s, `FAILED` with `reason` `"TESTING"`
+  (`"None"` otherwise). Re-sending an `external_reference` while it is pending answers HTTP 429
+  `error_code: "DUPLICATE_ATTEMPT"`; after it settles, 200 with the first `reference` and `status`. Errors are
+  `{ message, error_code }` (`ER101` bad phone, `ER201` decimal amount, HTTP 400). Unknown or not-yet-paid link
+  references answer 404 `{"message":"Not found"}`. The payment link page ignores `from`: the payer types the number.
+  **Every demo transaction reports `amount: "0.00"`** (also `app_amount`, `/history/` and the dashboard), so
+  `status()` turns a demo `SUCCESSFUL` into `unavailable` `BAD_AMOUNT`; production amounts not yet observed.
+  Status bodies carry a `signature` JWT (`{alg: HS256, app, typ}`, payload `iat/nbf/exp/source`) that
+  `parseCamPayCallback` verifies with the webhook key. Withdrawals answer 401
+  `API WITHDRAWALS UNAUTHORIZED` (`rejected`) until API withdrawals are enabled on the app; then `/withdraw/` answers
+  200 `{reference, status: "PENDING"}` and goes `SUCCESSFUL` in about 25 s (`endpoint: "withdraw"`, amount `"0.00"`),
+  even with a 0 XAF demo balance. Its callback has the same shape as a collection's, with `endpoint=withdraw`;
+  `parseCamPayCallback` returns `kind: 'payout'`. The callback came as a GET to the dashboard URL as is (no path
+  added), within a second of `SUCCESSFUL`, with the status body as query fields; `parseCamPayCallback` verified it.
+
 - pawaPay sandbox, direct deposit (2026-11-27): `POST /v2/deposits` answers HTTP 200 (not 201) with
   `status: "ACCEPTED"` and `nextStep: "FINAL_STATUS"` for both `MTN_MOMO_CMR` and `ORANGE_CMR`, so neither needs
   `preAuthorisationCode`. The test numbers went `COMPLETED` within 5 s, `amount: "100.00"`, with
@@ -270,6 +304,16 @@ npm run build && node --env-file=.env.live scripts/live-pawapay.mjs collect 2376
 node --env-file=.env.live scripts/live-pawapay.mjs deposit 237653456789 100   # direct: approve on the phone
 node --env-file=.env.live scripts/live-pawapay.mjs payout 237693456789 100
 node --env-file=.env.live scripts/live-pawapay.mjs listen 8787                                  # callback bodies
+```
+
+CamPay demo (no real money; test numbers `237677777777` MTN ok, `…770` MTN fail, `237699999999` Orange ok, `…990`
+Orange fail): put `CAMPAY_TOKEN` and `CAMPAY_WEBHOOK_KEY` in `.env.live`, then:
+
+```bash
+npm run build && node --env-file=.env.live scripts/live-campay.mjs collect 237677777777 100   # USSD push
+node --env-file=.env.live scripts/live-campay.mjs page 237699999999 100                       # open the link, pay
+node --env-file=.env.live scripts/live-campay.mjs payout 237677777777 100
+node --env-file=.env.live scripts/live-campay.mjs listen 8787                                  # callbacks
 ```
 
 MTN MoMo sandbox (EUR, no real money): put the Collections primary key in `.env.live` as `MTN_SUBSCRIPTION_KEY`,

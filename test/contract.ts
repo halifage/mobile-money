@@ -19,8 +19,8 @@ export type ContractFixtures = {
   expectedRef: string
   /** redirectUrl collect returns, if the provider hands the payer to its own page */
   redirectUrl?: string
-  /** how a failed send is reported; default 'uncertain' carrying expectedRef */
-  sendFailure?: 'uncertain' | 'rejected'
+  /** how a failed send is reported; default 'uncertain' carrying expectedRef; 'uncertain-without-ref' when the provider assigns the ref */
+  sendFailure?: 'uncertain' | 'uncertain-without-ref' | 'rejected'
   /** false for a static token: skips the OAuth token cases; default true */
   token?: boolean
   status: { completed: Reply; failed: Reply; failedReason: FailureReason; pending: Reply; unknown: Reply }
@@ -56,7 +56,11 @@ export function describeProviderContract(name: string, f: ContractFixtures) {
       expect((await caught(f.make().collect(f.request))).kind).toBe('rejected')
     })
 
-    const sendFailure = f.sendFailure === 'rejected' ? { kind: 'rejected' } : { kind: 'uncertain', ref }
+    const sendFailure = {
+      rejected: { kind: 'rejected' },
+      uncertain: { kind: 'uncertain', ref },
+      'uncertain-without-ref': { kind: 'uncertain', ref: undefined },
+    }[f.sendFailure ?? 'uncertain']
 
     it(`network error on send → ${sendFailure.kind}`, async () => {
       mockFetch({ '/token': TOKEN, ...f.accepted, [f.paths.send]: new TypeError('fetch failed') })
