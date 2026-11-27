@@ -209,7 +209,8 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
 
 - pawaPay production, Orange (2026-11-27): a 10 XAF deposit on `ORANGE_CMR` went `NOT_FOUND` → `COMPLETED` about
   30 s after Pay, with `providerTransactionId` (Orange's `MP…` id) in `data`. Another stayed `PROCESSING` for over 15
-  minutes when the payer did not approve the Orange prompt; it stays `pending`, so the caller decides when to give up.
+  minutes when the payer did not approve the Orange prompt (SDK: `pending`), then ended `FAILED` with `failureCode`
+  `PAYMENT_NOT_APPROVED` (SDK: `failed`, `declined`) on provider timeout. Approving after that timeout moves no money.
   An Orange payout on an account not enabled for it answers HTTP 403 with `status: "REJECTED"` and `failureCode`
   `PAYOUTS_NOT_ALLOWED` (SDK: `rejected`, nothing sent). Orange payouts need enabling per account in pawaPay.
 
