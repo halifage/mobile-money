@@ -1,4 +1,5 @@
 export { signCallbackUrl, verifyCallback } from './callback.js'
+export { type CamPayConfig, camPay, parseCamPayCallback } from './campay.js'
 export { type MtnDirectConfig, mtnDirect } from './mtn.js'
 export { type OrangeDirectConfig, orangeDirect } from './orange.js'
 export { type PawaPayConfig, parsePawaPayCallback, pawaPay } from './pawapay.js'
