@@ -51,6 +51,83 @@ describeProviderContract('pawaPay', {
   },
 })
 
+const { returnUrl: _, ...direct } = request
+const deposit = (status: string, extra: Record<string, unknown> = {}): Reply => ({
+  status: 200,
+  body: { depositId: request.id, status, ...extra },
+})
+
+describeProviderContract('pawaPay direct deposit', {
+  make: () => pawaPay(config),
+  request: direct,
+  currency: 'XAF',
+  token: false,
+  paths: { send: '/v2/deposits', status: `/v2/deposits/${request.id}` },
+  accepted: { '/v2/deposits': deposit('ACCEPTED') },
+  expectedRef: request.id,
+  status: {
+    completed: dep('COMPLETED', { amount: '10.00', currency: 'XAF' }),
+    failed: dep('FAILED', { failureReason: { failureCode: 'PAYMENT_NOT_APPROVED' } }),
+    failedReason: 'declined',
+    pending: dep('PROCESSING'),
+    unknown: dep('SOMETHING_NEW'),
+  },
+})
+
+describe('pawaPay direct deposits', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('posts the deposit without returnUrl', async () => {
+    const { calls } = mockFetch({ '/v2/deposits': deposit('ACCEPTED') })
+    await expect(pawaPay(config).collect(direct)).resolves.toEqual({ ref: request.id })
+    expect(calls[0]?.url).toBe('https://pawapay.test/v2/deposits')
+    expect(headersOf(calls[0]).authorization).toBe('Bearer tok_test')
+    expect(bodyOf(calls[0])).toEqual({
+      depositId: request.id,
+      payer: { type: 'MMO', accountDetails: { phoneNumber: '237653456789', provider: 'MTN_MOMO_CMR' } },
+      amount: '10',
+      currency: 'XAF',
+      customerMessage: 'Order 42',
+    })
+  })
+
+  it('omits customerMessage pawaPay would refuse', async () => {
+    for (const description of ['abc', 'x'.repeat(23), 'Order #42', '']) {
+      const { calls } = mockFetch({ '/v2/deposits': deposit('ACCEPTED') })
+      await pawaPay(config).collect({ ...direct, description })
+      expect(bodyOf(calls[0])).not.toHaveProperty('customerMessage')
+    }
+  })
+
+  it('DUPLICATE_IGNORED resolves with the ref', async () => {
+    mockFetch({ '/v2/deposits': deposit('DUPLICATE_IGNORED') })
+    await expect(pawaPay(config).collect(direct)).resolves.toEqual({ ref: request.id })
+  })
+
+  it('REJECTED on 200 → rejected with the failure code', async () => {
+    mockFetch({ '/v2/deposits': deposit('REJECTED', { failureReason: { failureCode: 'INVALID_PHONE_NUMBER' } }) })
+    expect(await caught(pawaPay(config).collect(direct))).toMatchObject({
+      kind: 'rejected',
+      code: 'INVALID_PHONE_NUMBER',
+    })
+  })
+
+  it('4xx → rejected with the failureReason code', async () => {
+    mockFetch({ '/v2/deposits': INVALID_RETURN_URL })
+    expect(await caught(pawaPay(config).collect(direct))).toMatchObject({
+      kind: 'rejected',
+      code: 'INVALID_PARAMETER',
+    })
+  })
+
+  it('REJECTED UNKNOWN_ERROR or unexpected 2xx body → uncertain with ref', async () => {
+    for (const r of [deposit('REJECTED', { failureReason: { failureCode: 'UNKNOWN_ERROR' } }), { status: 200 }]) {
+      mockFetch({ '/v2/deposits': r })
+      expect(await caught(pawaPay(config).collect(direct))).toMatchObject({ kind: 'uncertain', ref: request.id })
+    }
+  })
+})
+
 describe('pawaPay collections', () => {
   afterEach(() => vi.unstubAllGlobals())
 
@@ -98,10 +175,10 @@ describe('pawaPay collections', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it('rejects a non-UUID id and a missing returnUrl', async () => {
+  it('rejects a non-UUID id in both modes', async () => {
     const { calls } = mockFetch({})
-    for (const bad of [{ id: 'order-42' }, { returnUrl: undefined }]) {
-      const error = await caught(pawaPay(config).collect({ ...request, ...bad }))
+    for (const bad of [request, direct]) {
+      const error = await caught(pawaPay(config).collect({ ...bad, id: 'order-42' }))
       expect(error).toMatchObject({ kind: 'rejected', code: 'invalid_input' })
     }
     expect(calls).toHaveLength(0)
