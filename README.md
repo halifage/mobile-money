@@ -88,8 +88,11 @@ export async function POST(request: Request) {
 - MTN `status()` returns `failed` with code `NOT_FOUND` for a payment MTN never received. After an `uncertain`
   collect, wait a few minutes before treating `NOT_FOUND` as final.
 
-- `pawaPay` collects through its hosted Payment Page: pass `returnUrl`, send the payer to `redirectUrl`. `id` must be a
-  UUID and is the `ref`; the payer's number is fixed on the page. A deposit stays `pending` with code `NOT_FOUND`
+- `pawaPay` with `returnUrl` collects through its hosted Payment Page: send the payer to `redirectUrl`. Without
+  `returnUrl` it is a direct deposit for your own UI: no `redirectUrl`, the payer approves the prompt on their phone.
+  `description` is shown to the payer only if 4–22 letters, digits or spaces. A direct deposit's network error, 5xx
+  or `UNKNOWN_ERROR` is `uncertain` with `ref`: poll `status`, or re-send the same `id` (pawaPay answers
+  `DUPLICATE_IGNORED`). `id` must be a UUID and is the `ref`; on the hosted page the payer's number is fixed. A deposit stays `pending` with code `NOT_FOUND`
   until the payer presses Pay; the page expires after 15 minutes without a callback, so the caller decides when a
   long `NOT_FOUND` is dead. `callbackUrl` is ignored: pawaPay posts callbacks to the URLs set in its dashboard.
 
@@ -212,6 +215,9 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   minutes when the payer did not approve the Orange prompt; it stays `pending`, so the caller decides when to give up.
   An Orange payout on an account not enabled for it answers HTTP 403 with `status: "REJECTED"` and `failureCode`
   `PAYOUTS_NOT_ALLOWED` (SDK: `rejected`, nothing sent). Orange payouts need enabling per account in pawaPay.
+  A direct deposit sent with the production token to the sandbox answers HTTP 401 with `status: "REJECTED"` and
+  `failureCode` `AUTHENTICATION_ERROR` (SDK: `rejected`). pawaPay's providers page lists `MTN_MOMO_CMR` and
+  `ORANGE_CMR` as provider-authorised, so direct deposits need no `preAuthorisationCode`.
 
 - MTN MoMo sandbox (2026-11-03): token, `requesttopay` (202, empty body) and status polling work as documented,
   currency `EUR`. Status spellings: `CREATED` (pending), `SUCCESSFUL` (with `financialTransactionId`) and `FAILED`
@@ -258,6 +264,7 @@ pawaPay sandbox (no real money): put `PAWAPAY_TOKEN` in `.env.live` (sandbox tes
 
 ```bash
 npm run build && node --env-file=.env.live scripts/live-pawapay.mjs collect 237653456789 100   # open the URL, pay
+node --env-file=.env.live scripts/live-pawapay.mjs deposit 237653456789 100   # direct: approve on the phone
 node --env-file=.env.live scripts/live-pawapay.mjs payout 237693456789 100
 node --env-file=.env.live scripts/live-pawapay.mjs listen 8787                                  # callback bodies
 ```

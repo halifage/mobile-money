@@ -1,6 +1,7 @@
 // Live pawaPay test. PAWAPAY_ENVIRONMENT=sandbox (default); production moves real money.
 // Usage: npm run build && node --env-file=.env.live scripts/live-pawapay.mjs <mode>
 //   collect <phone> <amount>   prints the payment page URL, polls status every 5 s for 2 min
+//   deposit <phone> <amount>   direct deposit (no returnUrl): approve on the phone, polls status every 5 s for 2 min
 //   payout <phone> <amount>    sends a payout, polls payoutStatus every 5 s for 2 min
 //   listen <port>              logs raw callback bodies and what parsePawaPayCallback makes of them
 // .env.live: PAWAPAY_TOKEN, PAWAPAY_ENVIRONMENT
@@ -51,11 +52,22 @@ if (mode === 'listen') {
       })
       console.log('\nOpen and pay:', started.redirectUrl, '\n')
       check = () => provider.status(started.ref)
+    } else if (mode === 'deposit') {
+      const { ref } = await provider.collect({
+        id,
+        operator,
+        amount: Number(arg2),
+        phone,
+        description: 'Live test',
+        callbackUrl: 'https://example.com/cb',
+      })
+      console.log('\nApprove on the phone.\n')
+      check = () => provider.status(ref)
     } else if (mode === 'payout') {
       const { ref } = await provider.payout({ id, operator, amount: Number(arg2), phone, message: 'Ecolage test' })
       check = () => provider.payoutStatus(ref)
     } else {
-      console.error('mode: collect | payout | listen')
+      console.error('mode: collect | deposit | payout | listen')
       process.exit(1)
     }
   } catch (error) {

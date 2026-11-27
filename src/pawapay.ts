@@ -41,6 +41,10 @@ function msisdn(phone: string): string {
   return `237${match[1]}`
 }
 
+/** pawaPay shows 4–22 chars to the payer; anything else is omitted rather than refused. */
+const customerMessage = (text: string, allowed: RegExp) =>
+  text.length >= 4 && text.length <= 22 && allowed.test(text) ? { customerMessage: text } : {}
+
 const failureCode = (value: Record<string, unknown>) => str(record(value.failureReason).failureCode)
 const rejected = (result: HttpResult) =>
   new MobileMoneyError('rejected', failureCode(record(result.body)) || providerCode(result))
@@ -62,7 +66,7 @@ function lookup(body: Record<string, unknown>, notFound: Outcome, reason: (code:
   }
 }
 
-/** pawaPay Merchant API v2, Cameroon: collections through the hosted Payment Page, and payouts. */
+/** pawaPay Merchant API v2, Cameroon: collections (hosted Payment Page with `returnUrl`, else direct deposit), and payouts. */
 export function pawaPay(config: PawaPayConfig): MobileMoneyProvider & MobileMoneyPayouts {
   const base = config.baseUrl ?? BASE[config.environment]
   const headers = { authorization: `Bearer ${config.token}`, 'content-type': 'application/json' }
@@ -75,14 +79,40 @@ export function pawaPay(config: PawaPayConfig): MobileMoneyProvider & MobileMone
       throw unavailable(error)
     }
   }
+  /** POST a deposit or payout; `id` is ours, so re-sending it is safe and an unclear reply is `uncertain`. */
+  const initiate = async (path: string, id: string, body: object) => {
+    let result: HttpResult
+    try {
+      result = await send(`${base}${path}`, { method: 'POST', headers, body: JSON.stringify(body) })
+    } catch {
+      throw new MobileMoneyError('uncertain', 'NETWORK', id)
+    }
+    const reply = record(result.body)
+    if (result.status >= 500) throw new MobileMoneyError('uncertain', `HTTP_${result.status}`, id)
+    if (!ok(result)) throw rejected(result)
+    if (reply.status === 'ACCEPTED' || reply.status === 'DUPLICATE_IGNORED') return { ref: id }
+    const code = failureCode(reply)
+    if (reply.status === 'REJECTED' && code !== 'UNKNOWN_ERROR')
+      throw new MobileMoneyError('rejected', code || 'REJECTED')
+    // UNKNOWN_ERROR or an unexpected 2xx body: pawaPay may still process it
+    throw new MobileMoneyError('uncertain', code || 'BAD_RESPONSE', id)
+  }
 
   return {
     operators: ['mtn', 'orange'],
 
     async collect(request) {
-      if (!request.returnUrl) throw invalid()
       checkIds(request)
       const phoneNumber = msisdn(request.phone)
+      if (!request.returnUrl) {
+        return initiate('/v2/deposits', request.id, {
+          depositId: request.id,
+          payer: { type: 'MMO', accountDetails: { phoneNumber, provider: PROVIDER[request.operator] } },
+          amount: String(request.amount),
+          currency: CURRENCY,
+          ...customerMessage(request.description, /^[a-zA-Z0-9 ]+$/),
+        })
+      }
       let result: HttpResult
       try {
         result = await send(`${base}/v2/paymentpage`, {
@@ -115,32 +145,13 @@ export function pawaPay(config: PawaPayConfig): MobileMoneyProvider & MobileMone
     async payout(request) {
       checkIds(request)
       const phoneNumber = msisdn(request.phone)
-      const message = request.message ?? ''
-      let result: HttpResult
-      try {
-        result = await send(`${base}/v2/payouts`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            payoutId: request.id,
-            amount: String(request.amount),
-            currency: CURRENCY,
-            recipient: { type: 'MMO', accountDetails: { phoneNumber, provider: PROVIDER[request.operator] } },
-            ...(message.length >= 4 && message.length <= 22 && { customerMessage: message }),
-          }),
-        })
-      } catch {
-        throw new MobileMoneyError('uncertain', 'NETWORK', request.id)
-      }
-      const body = record(result.body)
-      if (result.status >= 500) throw new MobileMoneyError('uncertain', `HTTP_${result.status}`, request.id)
-      if (!ok(result)) throw rejected(result)
-      if (body.status === 'ACCEPTED' || body.status === 'DUPLICATE_IGNORED') return { ref: request.id }
-      const code = failureCode(body)
-      if (body.status === 'REJECTED' && code !== 'UNKNOWN_ERROR')
-        throw new MobileMoneyError('rejected', code || 'REJECTED')
-      // UNKNOWN_ERROR or an unexpected 2xx body: pawaPay may still process it
-      throw new MobileMoneyError('uncertain', code || 'BAD_RESPONSE', request.id)
+      return initiate('/v2/payouts', request.id, {
+        payoutId: request.id,
+        amount: String(request.amount),
+        currency: CURRENCY,
+        recipient: { type: 'MMO', accountDetails: { phoneNumber, provider: PROVIDER[request.operator] } },
+        ...customerMessage(request.message ?? '', /./),
+      })
     },
 
     async payoutStatus(ref) {
