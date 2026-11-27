@@ -89,8 +89,11 @@ export async function POST(request: Request) {
 - MTN `status()` returns `failed` with code `NOT_FOUND` for a payment MTN never received. After an `uncertain`
   collect, wait a few minutes before treating `NOT_FOUND` as final.
 
-- `pawaPay` collects through its hosted Payment Page: pass `returnUrl`, send the payer to `redirectUrl`. `id` must be a
-  UUID and is the `ref`; the payer's number is fixed on the page. A deposit stays `pending` with code `NOT_FOUND`
+- `pawaPay` with `returnUrl` collects through its hosted Payment Page: send the payer to `redirectUrl`. Without
+  `returnUrl` it is a direct deposit for your own UI: no `redirectUrl`, the payer approves the prompt on their phone.
+  `description` is shown to the payer only if 4–22 letters, digits or spaces. A direct deposit's network error, 5xx
+  or `UNKNOWN_ERROR` is `uncertain` with `ref`: poll `status`, or re-send the same `id` (pawaPay answers
+  `DUPLICATE_IGNORED`). `id` must be a UUID and is the `ref`; on the hosted page the payer's number is fixed. A deposit stays `pending` with code `NOT_FOUND`
   until the payer presses Pay; the page expires after 15 minutes without a callback, so the caller decides when a
   long `NOT_FOUND` is dead. `callbackUrl` is ignored: pawaPay posts callbacks to the URLs set in its dashboard.
 
@@ -243,6 +246,12 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   `parseCamPayCallback` verifies with the webhook key. Withdrawals on an app without them enabled answer 401
   `API WITHDRAWALS UNAUTHORIZED` (`rejected`). Callbacks not exercised (dashboard URL not set).
 
+- pawaPay sandbox, direct deposit (2026-11-27): `POST /v2/deposits` answers HTTP 200 (not 201) with
+  `status: "ACCEPTED"` and `nextStep: "FINAL_STATUS"` for both `MTN_MOMO_CMR` and `ORANGE_CMR`, so neither needs
+  `preAuthorisationCode`. The test numbers went `COMPLETED` within 5 s, `amount: "100.00"`, with
+  `providerTransactionId` and the `customerMessage` echoed in `data`. A token for the wrong environment answers
+  HTTP 401 with `status: "REJECTED"` and `failureCode` `AUTHENTICATION_ERROR` (SDK: `rejected`).
+
 - MTN MoMo sandbox (2026-11-03): token, `requesttopay` (202, empty body) and status polling work as documented,
   currency `EUR`. Status spellings: `CREATED` (pending), `SUCCESSFUL` (with `financialTransactionId`) and `FAILED`
   with a `reason`: `APPROVAL_REJECTED`, `INTERNAL_PROCESSING_ERROR`, `PAYER_NOT_FOUND`, `INVALID_CURRENCY`. The documented
@@ -288,6 +297,7 @@ pawaPay sandbox (no real money): put `PAWAPAY_TOKEN` in `.env.live` (sandbox tes
 
 ```bash
 npm run build && node --env-file=.env.live scripts/live-pawapay.mjs collect 237653456789 100   # open the URL, pay
+node --env-file=.env.live scripts/live-pawapay.mjs deposit 237653456789 100   # direct: approve on the phone
 node --env-file=.env.live scripts/live-pawapay.mjs payout 237693456789 100
 node --env-file=.env.live scripts/live-pawapay.mjs listen 8787                                  # callback bodies
 ```
