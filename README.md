@@ -207,6 +207,12 @@ MTN, MoMo, Orange and Orange Money are trademarks of their owners. Swap in your 
   `WALLET_LIMIT_REACHED`). Callbacks were not exercised (none configured): polling only. A non-https `returnUrl`
   (`http://localhost`) is rejected with HTTP 400 `INVALID_PARAMETER`; 4xx errors carry `failureReason.failureCode`.
 
+- pawaPay production, Orange (2026-11-27): a 10 XAF deposit on `ORANGE_CMR` went `NOT_FOUND` → `COMPLETED` about
+  30 s after Pay, with `providerTransactionId` (Orange's `MP…` id) in `data`. Another stayed `PROCESSING` for over 15
+  minutes when the payer did not approve the Orange prompt; it stays `pending`, so the caller decides when to give up.
+  An Orange payout on an account not enabled for it answers HTTP 403 with `status: "REJECTED"` and `failureCode`
+  `PAYOUTS_NOT_ALLOWED` (SDK: `rejected`, nothing sent). Orange payouts need enabling per account in pawaPay.
+
 - MTN MoMo sandbox (2026-11-03): token, `requesttopay` (202, empty body) and status polling work as documented,
   currency `EUR`. Status spellings: `CREATED` (pending), `SUCCESSFUL` (with `financialTransactionId`) and `FAILED`
   with a `reason`: `APPROVAL_REJECTED`, `INTERNAL_PROCESSING_ERROR`, `PAYER_NOT_FOUND`, `INVALID_CURRENCY`. The documented
