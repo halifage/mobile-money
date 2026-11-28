@@ -52,6 +52,10 @@ export async function POST(request: Request) {
 }
 ```
 
+`returnUrl` picks the collection flow. Set it and `collect` returns a `redirectUrl` to a hosted payment page; leave it
+out and the payer approves a push on their phone. `pawaPay` and `camPay` do both, `orangeWebPay` is page only,
+`orangeDirect` and `mtnDirect` are push only.
+
 ## Outcomes
 
 | `status()` result | Meaning |

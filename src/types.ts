@@ -11,7 +11,7 @@ export interface CollectRequest {
   description: string
   /** Passed through as is; sign it with signCallbackUrl. */
   callbackUrl: string
-  /** Where the payer returns after paying on a provider page. Required by orangeWebPay. */
+  /** Where the payer returns from a hosted payment page. Set: page flow (`redirectUrl`); unset: push to the phone (pawaPay, camPay). Required by orangeWebPay. */
   returnUrl?: string
 }
 
